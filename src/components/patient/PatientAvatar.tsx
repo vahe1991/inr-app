@@ -1,5 +1,6 @@
+import { FemaleAvatar } from "@/components/svg-components/female-icon";
+import { MaleAvatar } from "@/components/svg-components/male-icon";
 import { resolveGender } from "@/utils/gender";
-import { SymbolView } from "expo-symbols";
 import { useState } from "react";
 import { Image, View } from "react-native";
 
@@ -7,7 +8,6 @@ type PatientAvatarProps = {
   photo?: string | null;
   gender?: string | null;
   size?: number;
-  rounded?: "full" | "lg";
 };
 
 function resolvePhotoUrl(photo?: string | null): string | null {
@@ -21,7 +21,6 @@ export function PatientAvatar({
   photo,
   gender,
   size = 48,
-  rounded = "full",
 }: PatientAvatarProps) {
   const [failed, setFailed] = useState(false);
   const uri = resolvePhotoUrl(photo);
@@ -34,13 +33,11 @@ export function PatientAvatar({
       : kind === "male"
         ? "bg-blue-50"
         : "bg-brand-50";
-  const tint =
-    kind === "female" ? "#fb4ed5" : kind === "male" ? "#4f96d9" : "#5d4081";
-  const radiusClass = rounded === "lg" ? "rounded-[12px]" : "rounded-full";
+  const avatar = kind === "female" ? <FemaleAvatar /> : <MaleAvatar />;
 
   return (
     <View
-      className={`items-center justify-center overflow-hidden ${radiusClass} ${bgClass}`}
+      className={`items-center justify-center overflow-hidden rounded-[8px] ${bgClass}`}
       style={{ width: size, height: size }}
     >
       {showPhoto ? (
@@ -51,25 +48,7 @@ export function PatientAvatar({
           onError={() => setFailed(true)}
         />
       ) : (
-        <SymbolView
-          name={{
-            ios: "person.fill",
-            android: kind === "female" ? "woman" : "man",
-            web: kind === "female" ? "woman" : "man",
-          }}
-          size={Math.round(size * 0.55)}
-          tintColor={tint}
-          fallback={
-            <View
-              className="rounded-full"
-              style={{
-                width: size * 0.35,
-                height: size * 0.35,
-                backgroundColor: tint,
-              }}
-            />
-          }
-        />
+        avatar
       )}
     </View>
   );
