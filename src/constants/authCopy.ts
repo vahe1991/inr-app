@@ -1,0 +1,48 @@
+export const AUTH_COPY = {
+  login: {
+    title: "ՄՈՒՏՔ",
+    subtitle: "Մուտքագրել տվյալները",
+    emailLabel: "էլ.հասցե",
+    emailPlaceholder: "մուտքագրել էլ. հասցեն",
+    passwordLabel: "Գաղտնաբառ",
+    passwordPlaceholder: "Մուտքագրել գաղտնաբառը",
+    rememberMe: "Պահպանել տվյալները",
+    forgotPassword: "Մոռացե՞լ եք գաղտնաբառը",
+    submit: "Մուտք",
+    emailError: "Սխալ էլ․ հասցե",
+    passwordError: "Սխալ գաղտնաբառ",
+    requiredEmail: "Էլ․ հասցե դաշտը պարտադիր է",
+    requiredPassword: "Գաղտնաբառ դաշտը պարտադիր է",
+    invalidEmail: "Մուտքագրեք վավեր էլ․ հասցե",
+    genericError: "Մուտքագրման սխալ",
+  },
+  forgotPassword: {
+    title: "ԳԱՂՏՆԱԲԱՌԻ ՎԵՐԱԿԱՆԳՆՈՒՄ",
+    subtitle: "Մուտքագրեք էլ․ հասցեն՝ գաղտնաբառը վերականգնելու համար",
+    emailLabel: "էլ.հասցե",
+    emailPlaceholder: "մուտքագրել էլ․ հասցեն",
+    submit: "Շարունակել",
+    backToLogin: "Վերադառնալ մուտքի էջ",
+  },
+  checkEmail: {
+    title: "ՍՏՈՒԳԵԼ ԷԼԵԿՏՐՈՆԱՅԻՆ ՀԱՍՑԵՆ",
+    description:
+      "Մենք ուղարկել ենք գաղտնաբառի վերականգնման հղումը ձեր էլ․ հասցեին։ Բացեք նամակը և հետևեք ցուցումներին։",
+    backToLogin: "Վերադառնալ մուտքի էջ",
+  },
+  resetPassword: {
+    title: "ԳԱՂՏՆԱԲԱՌԻ ՎԵՐԱԿԱՆԳՆՈՒՄ",
+    subtitle: "Մուտքագրել նոր գաղտնաբառը",
+    passwordLabel: "գաղտնաբառ",
+    passwordPlaceholder: "մուտքագրել գաղտնաբառը",
+    confirmLabel: "կրկնել գաղտնաբառը",
+    confirmPlaceholder: "կրկնել գաղտնաբառը",
+    submit: "Փոխել գաղտնաբառը",
+    mismatch: "Գաղտնաբառերը չեն համընկնում",
+    minLength: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ",
+  },
+  resetSuccess: {
+    title: "ԳԱՂՏՆԱԲԱՌԸ ՀԱՋՈՂՈՒԹՅԱՄԲ ՓՈԽՎԵՑ",
+    submit: "Մուտք",
+  },
+} as const;

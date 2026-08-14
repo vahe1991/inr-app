@@ -1,0 +1,133 @@
+import $axios from "@/libs/axios";
+import type {
+  InvestigationApiResponse,
+  PatientAllInrApiResponse,
+  PatientInrResponse,
+} from "@/types/inr-types";
+import type {
+  InrAdviceApiResponse,
+  InrComplicationApiResponse,
+} from "@/types/patient-types";
+
+export const inrNormApi = {
+  async getInrInvestigations(
+    params?: Record<string, string | number>,
+  ): Promise<InvestigationApiResponse> {
+    return (await $axios.get<InvestigationApiResponse>("inr", { params })).data;
+  },
+
+  async getPatientAllInr(
+    queryParams: Record<string, string> & { patient_id: string },
+  ): Promise<PatientAllInrApiResponse> {
+    const { patient_id, ...params } = queryParams;
+    return (
+      await $axios.get<PatientAllInrApiResponse>(`patients/${patient_id}/inr`, {
+        params,
+      })
+    ).data;
+  },
+
+  async createPatientInr(mutateData: {
+    id: string;
+    date: string;
+    value: number | string;
+    comment?: string;
+    spravochnikId: string;
+    nmmcAllExamId?: string;
+    region?: string | number;
+    city?: string | number;
+    address?: string;
+  }) {
+    const { id, ...fields } = mutateData;
+    const formData = new FormData();
+
+    Object.entries(fields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+
+    return (await $axios.post(`patients/${id}/inr`, formData)).data;
+  },
+
+  async getPatientInrNorm(
+    queryParams: Record<string, string>,
+  ): Promise<PatientInrResponse> {
+    const { patient_id, ...params } = queryParams;
+    return (
+      await $axios.get<PatientInrResponse>(`patients/${patient_id}/inr-norm`, {
+        params,
+      })
+    ).data;
+  },
+
+  async updatePatientInrNorm(mutateData: {
+    patient_id: string | number;
+    normStart: string;
+    normEnd: string;
+  }) {
+    const { patient_id, ...data } = mutateData;
+    return (await $axios.post(`patients/${patient_id}/inr-norm`, data)).data;
+  },
+
+  async getPatientInrAdvice(
+    queryParams: Record<string, string>,
+  ): Promise<InrAdviceApiResponse> {
+    const { patient_id, ...params } = queryParams;
+    return (
+      await $axios.get<InrAdviceApiResponse>(
+        `patients/${patient_id}/inr-advice`,
+        { params },
+      )
+    ).data;
+  },
+
+  async createOrUpdatePatientInrAdvice(mutateData: {
+    id?: number;
+    patient_id: string | number;
+    date: string;
+    isActual: number;
+    advice: string;
+  }) {
+    const { patient_id, ...data } = mutateData;
+    return (
+      await $axios.post(`patients/${patient_id}/inr-advice`, data)
+    ).data;
+  },
+
+  async getPatientInrComplication(
+    queryParams: Record<string, string>,
+  ): Promise<InrComplicationApiResponse> {
+    const { patient_id, ...params } = queryParams;
+    return (
+      await $axios.get<InrComplicationApiResponse>(
+        `patients/${patient_id}/inr-complication`,
+        { params },
+      )
+    ).data;
+  },
+
+  async createOrUpdateInrComplication(mutateData: {
+    id?: number;
+    patient_id: string;
+    date: string;
+    isActual: number;
+    complicationType: string;
+    complication: string;
+  }) {
+    const { patient_id, ...data } = mutateData;
+    return (
+      await $axios.post(`patients/${patient_id}/inr-complication`, data)
+    ).data;
+  },
+
+  async deletePatientInr({
+    patient_id,
+    inrId,
+  }: {
+    patient_id: string;
+    inrId: number;
+  }) {
+    return await $axios.delete(`patients/${patient_id}/inr/${inrId}`);
+  },
+};

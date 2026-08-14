@@ -1,0 +1,27 @@
+import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
+import { Button } from "@/components/ui/Button";
+import { HY } from "@/constants/hy";
+import { useAuth } from "@/contexts/AuthContext";
+import { Text, View } from "react-native";
+
+export default function ProfileScreen() {
+  const { email, name, logOut } = useAuth();
+
+  return (
+    <AuthenticatedScreen contentClassName="flex-1 px-4 pt-6">
+      <Text className="mb-4 text-xl font-semibold text-grey-900">
+        {HY.profile}
+      </Text>
+      <View className="rounded-xl border border-calendar-border bg-brand-100 p-4">
+        <Text className="text-base font-semibold text-grey-900">
+          {name || HY.user}
+        </Text>
+        <Text className="mt-1 text-sm text-oxford-blue-400">{email}</Text>
+      </View>
+
+      <View className="mt-8">
+        <Button title={HY.logout} onPress={() => void logOut()} />
+      </View>
+    </AuthenticatedScreen>
+  );
+}
