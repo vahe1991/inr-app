@@ -9,6 +9,13 @@ import type {
   InrComplicationApiResponse,
 } from "@/types/patient-types";
 
+/** React Native has no `File`; document/image pickers return a uri descriptor. */
+export type InrFileInput = {
+  uri: string;
+  name: string;
+  mimeType?: string;
+};
+
 export const inrNormApi = {
   async getInrInvestigations(
     params?: Record<string, string | number>,
@@ -31,6 +38,8 @@ export const inrNormApi = {
     id: string;
     date: string;
     value: number | string;
+    placeOfOrigin?: string;
+    file?: InrFileInput;
     comment?: string;
     spravochnikId: string;
     nmmcAllExamId?: string;
@@ -38,7 +47,7 @@ export const inrNormApi = {
     city?: string | number;
     address?: string;
   }) {
-    const { id, ...fields } = mutateData;
+    const { id, file, ...fields } = mutateData;
     const formData = new FormData();
 
     Object.entries(fields).forEach(([key, value]) => {
@@ -47,7 +56,27 @@ export const inrNormApi = {
       }
     });
 
+    if (file) {
+      formData.append("file", {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType ?? "application/octet-stream",
+      } as unknown as Blob);
+    }
+
     return (await $axios.post(`patients/${id}/inr`, formData)).data;
+  },
+
+  async getPatientInr(queryParams: {
+    patient_id: string | number;
+    date: string;
+  }): Promise<PatientInrResponse> {
+    const { patient_id, ...params } = queryParams;
+    return (
+      await $axios.get<PatientInrResponse>(`patients/${patient_id}/inr-norm`, {
+        params,
+      })
+    ).data;
   },
 
   async getPatientInrNorm(
@@ -121,7 +150,7 @@ export const inrNormApi = {
     ).data;
   },
 
-  async deletePatientInr({
+  async deletePatientInrNorm({
     patient_id,
     inrId,
   }: {

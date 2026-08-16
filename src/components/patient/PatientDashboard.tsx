@@ -3,6 +3,7 @@ import { NavRow } from "@/components/layout/NavRow";
 import { InrScaleCard } from "@/components/patient/InrScaleCard";
 import { PatientAvatar } from "@/components/patient/PatientAvatar";
 import { AdviceIcon } from "@/components/svg-components/advice-icon";
+import { ArrowLeftIcon } from "@/components/svg-components/arrow-left-icon";
 import { CalendarIcon } from "@/components/svg-components/calendar-icon";
 import { ComplexityIcon } from "@/components/svg-components/complexity-icon";
 import { HeartIcon } from "@/components/svg-components/heart-icon";
@@ -11,7 +12,6 @@ import { HY } from "@/constants/hy";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import type { PatientType } from "@/types/patient-types";
 import { useRouter } from "expo-router";
-import { SymbolView } from "expo-symbols";
 import { Pressable, Text, View } from "react-native";
 
 type PatientDashboardProps = {
@@ -42,31 +42,17 @@ export function PatientDashboard({
 
   return (
     <View className="gap-2">
-      <View className="mb-4 flex-row items-center gap-3 px-4 pt-3">
-        <Pressable
-          onPress={onBack}
-          hitSlop={8}
-          className="h-9 w-9 items-center justify-center"
-          accessibilityRole="button"
-          accessibilityLabel={HY.back}
-        >
-          <SymbolView
-            name={{
-              ios: "chevron.left",
-              android: "arrow_back",
-              web: "arrow_back",
-            }}
-            size={24}
-            tintColor="#6A4A98"
-          />
-        </Pressable>
-
-        <PatientAvatar
-          photo={photo}
-          gender={patient?.gender}
-          size={48}
-          rounded="lg"
-        />
+      <Pressable
+        onPress={onBack}
+        hitSlop={8}
+        className=" pt-[15px] pb-[6px] w-[58px] items-center justify-center active:opacity-80"
+        accessibilityRole="button"
+        accessibilityLabel={HY.back}
+      >
+        <ArrowLeftIcon />
+      </Pressable>
+      <View className="mb-4 flex-row items-center gap-3 px-4">
+        <PatientAvatar photo={photo} gender={patient?.gender} />
 
         <Text
           className="min-w-0 flex-1 font-bold text-base text-grey-900"
@@ -76,11 +62,9 @@ export function PatientDashboard({
         </Text>
 
         {patient?.id != null ? (
-          <View className="rounded-md bg-calendar-primary px-2.5 py-1">
-            <Text className="font-semibold text-[11px] text-white">
-              ID: {patient.id}
-            </Text>
-          </View>
+          <Text className="rounded-[4px] bg-brand-700 px-[6px] py-[2px] font-[500] text-[14px] text-white">
+            {HY.idLabel}: {patient.id}
+          </Text>
         ) : null}
       </View>
 

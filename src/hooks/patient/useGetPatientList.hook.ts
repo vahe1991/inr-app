@@ -7,6 +7,10 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 
 type PatientsListParams = Omit<PatientsSearchType, "page">;
 
+/**
+ * Same contract as the web hook, but paginated with an infinite query so the
+ * mobile list can append pages while scrolling.
+ */
 export const usePatientsList = (params: PatientsListParams = {}) => {
   const pageSize = params.pageSize ?? 20;
 

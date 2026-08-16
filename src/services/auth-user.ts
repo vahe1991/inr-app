@@ -18,3 +18,21 @@ export const login = async (user: LoginPayload): Promise<LoginResponse> => {
 export const logout = async (): Promise<LogoutResponse> => {
   return await $axios.post("logout");
 };
+
+export const createUser = async (user: Record<string, unknown>) => {
+  return await $axios.post(`users`, user);
+};
+
+export const updateUser = async ({
+  id,
+  user,
+}: {
+  id: string | number;
+  user: Record<string, unknown>;
+}) => {
+  return await $axios.patch(`users/${id}`, user);
+};
+
+export const deleteUserById = async (id: string | number) => {
+  return await $axios.delete(`users/${id}`);
+};

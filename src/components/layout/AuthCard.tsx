@@ -17,7 +17,7 @@ type AuthCardProps = {
 
 export function AuthCard({ children, title, subtitle }: AuthCardProps) {
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-white" edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}

@@ -1,7 +1,7 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
-import { useInrInvestigationsList } from "@/hooks/useInrInvestigations";
+import { useInrInvestigationsList } from "@/hooks/inr-norm/useGetInrInvestigationsList.hook";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {

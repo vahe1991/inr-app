@@ -1,48 +1,66 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { EditBtnIcon } from "@/components/svg-components/edit-icon";
 import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/TextField";
+import { FormTextField } from "@/components/ui/FormTextField";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
-import { usePatientInrNorm } from "@/hooks/usePatientInr";
-import { useUpdatePatientInrNorm } from "@/hooks/usePatientInrMutations";
+import { useGetPatientInrNorm } from "@/hooks/inr-norm/useGetPatientInrNorm.hook";
+import { useUpdatePatientInrNorm } from "@/hooks/inr-norm/useUpdatePatientInrNorm.hook";
+import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { Alert, ScrollView, View } from "react-native";
+
+type EditNormForm = {
+  normStart: string;
+  normEnd: string;
+};
 
 export default function EditNormScreen() {
   const router = useRouter();
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
-  const { norm, isLoading } = usePatientInrNorm(patientId);
-  const [normStart, setNormStart] = useState("");
-  const [normEnd, setNormEnd] = useState("");
+  const { inrNorm, isLoading } = useGetPatientInrNorm({
+    patient_id: patientId ?? "",
+    date: dayjs().format("YYYY-MM-DD"),
+  });
+
+  const { control, handleSubmit, getValues, reset } = useForm<EditNormForm>({
+    defaultValues: { normStart: "", normEnd: "" },
+  });
 
   const { mutate, isPending } = useUpdatePatientInrNorm(() => {
-    Alert.alert(HY.saved, HY.editInrNorm);
     router.back();
   });
 
   useEffect(() => {
-    if (norm) {
-      setNormStart(String(norm.normStart ?? ""));
-      setNormEnd(String(norm.normEnd ?? ""));
+    if (inrNorm) {
+      reset({
+        normStart: String(inrNorm.normStart ?? ""),
+        normEnd: String(inrNorm.normEnd ?? ""),
+      });
     }
-  }, [norm]);
+  }, [inrNorm, reset]);
 
   if (isLoading) return <LoadingScreen />;
 
-  const onSave = () => {
-    const start = Number(normStart);
-    const end = Number(normEnd);
-    if (!patientId || Number.isNaN(start) || Number.isNaN(end) || start >= end) {
+  const onSave = ({ normStart, normEnd }: EditNormForm) => {
+    if (!patientId) {
       Alert.alert(HY.brand, HY.invalidNorm);
       return;
     }
     mutate({
       patient_id: patientId,
-      normStart: String(start),
-      normEnd: String(end),
+      normStart: String(Number(normStart)),
+      normEnd: String(Number(normEnd)),
     });
+  };
+
+  const numberRules = {
+    required: HY.requiredField,
+    validate: (raw: string) =>
+      (raw.trim() !== "" && !Number.isNaN(Number(raw))) || HY.invalidNumber,
   };
 
   return (
@@ -52,28 +70,48 @@ export default function EditNormScreen() {
         contentContainerClassName="px-4 pb-10 pt-3"
         keyboardShouldPersistTaps="handled"
       >
-        <PatientSubHeader title={HY.editInrNorm} onBack={() => router.back()} />
-        <View className="mb-4 flex-row items-end gap-3">
+        <PatientSubHeader
+          title={HY.editInrNorm}
+          description={HY.enterNormRange}
+          icon={<EditBtnIcon />}
+          onBack={() => router.back()}
+        />
+        <View className="mb-4 flex-row items-start gap-3">
           <View className="flex-1">
-            <TextField
+            <FormTextField
+              control={control}
+              name="normStart"
+              rules={numberRules}
               label={HY.normStart}
-              value={normStart}
-              onChangeText={setNormStart}
               keyboardType="decimal-pad"
               placeholder="00.00"
             />
           </View>
           <View className="flex-1">
-            <TextField
+            <FormTextField
+              control={control}
+              name="normEnd"
+              rules={{
+                ...numberRules,
+                validate: (raw: string) => {
+                  const base = numberRules.validate(raw);
+                  if (base !== true) return base;
+                  return (
+                    Number(getValues("normStart")) < Number(raw) || HY.normOrder
+                  );
+                },
+              }}
               label={HY.normEnd}
-              value={normEnd}
-              onChangeText={setNormEnd}
               keyboardType="decimal-pad"
               placeholder="00.00"
             />
           </View>
         </View>
-        <Button title={HY.save} onPress={onSave} loading={isPending} />
+        <Button
+          title={HY.save}
+          onPress={handleSubmit(onSave)}
+          loading={isPending}
+        />
       </ScrollView>
     </AuthenticatedScreen>
   );

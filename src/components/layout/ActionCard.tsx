@@ -15,7 +15,7 @@ export function ActionCard({
   return (
     <Pressable
       onPress={onPress}
-      className={`h-[120px] w-[130px] flex-1 items-center bg-brand-50 gap-2 pt-[24px] pb-2 active:opacity-80 ${className}`}
+      className={`h-[120px] w-[130px] flex-1 items-center bg-brand-50 gap-2 pt-[24px] pb-2 active:bg-brand-100 ${className}`}
     >
       <View
         style={{

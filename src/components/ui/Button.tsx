@@ -5,7 +5,7 @@ type ButtonProps = {
   onPress?: () => void;
   loading?: boolean;
   disabled?: boolean;
-  variant?: "primary" | "outline" | "ghost";
+  variant?: "primary" | "outline" | "ghost" | "destructive";
   className?: string;
 };
 
@@ -21,13 +21,15 @@ export function Button({
     "h-12 w-full items-center justify-center rounded-lg px-4 active:opacity-80";
   const variants = {
     primary: "bg-calendar-primary",
-    outline: "border border-calendar-primary bg-white",
+    outline: "border border-brand-200 bg-brand-10",
     ghost: "bg-transparent",
+    destructive: "bg-red-700",
   };
   const textVariants = {
     primary: "font-semibold text-white",
     outline: "font-semibold text-calendar-primary",
     ghost: "font-medium text-auth-link",
+    destructive: "font-semibold text-white",
   };
 
   const isDisabled = Boolean(disabled || loading);
@@ -47,7 +49,13 @@ export function Button({
       className={`${base} ${disabledPrimary} ${isDisabled ? "opacity-100" : ""} ${loading ? "opacity-60" : ""} ${className}`}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "primary" ? "#fff" : "#5d4081"} />
+        <ActivityIndicator
+          color={
+            variant === "primary" || variant === "destructive"
+              ? "#fff"
+              : "#5d4081"
+          }
+        />
       ) : (
         <Text className={`text-base ${disabledText}`}>{title}</Text>
       )}

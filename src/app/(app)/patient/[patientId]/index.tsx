@@ -4,8 +4,9 @@ import { ChatIcon } from "@/components/svg-components/chat-icon";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
-import { usePatientById } from "@/hooks/usePatientById";
-import { usePatientAllInr, usePatientInrNorm } from "@/hooks/usePatientInr";
+import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
+import { useGetPatientInrNorm } from "@/hooks/inr-norm/useGetPatientInrNorm.hook";
+import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
 import { calendarApi } from "@/services/calendar.api";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,11 +17,19 @@ export default function PatientScreen() {
   const router = useRouter();
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
   const { patient, isLoading } = usePatientById(patientId);
-  const { norm, isLoading: normLoading } = usePatientInrNorm(patientId);
-  const { items: inrItems, isLoading: inrLoading } =
-    usePatientAllInr(patientId);
+  const { inrNorm, isLoading: normLoading } = useGetPatientInrNorm({
+    patient_id: patientId ?? "",
+    date: dayjs().format("YYYY-MM-DD"),
+  });
+  const { allInr, isLoading: inrLoading } = useGetPatientAllInr({
+    patient_id: patientId ?? "",
+    page: "1",
+    pageSize: "50",
+  });
   const [dailyDose, setDailyDose] = useState(0);
   const [nextTestLabel, setNextTestLabel] = useState<string>(HY.notScheduled);
+
+  const inrItems = useMemo(() => allInr?.items ?? [], [allInr]);
 
   const currentInr = useMemo(() => {
     if (!inrItems.length) return 0;
@@ -68,8 +77,8 @@ export default function PatientScreen() {
           <PatientDashboard
             patient={patient}
             patientId={patientId}
-            normStart={norm?.normStart}
-            normEnd={norm?.normEnd}
+            normStart={inrNorm?.normStart}
+            normEnd={inrNorm?.normEnd}
             currentInr={currentInr}
             ttr={0}
             dailyDose={dailyDose}

@@ -1,3 +1,4 @@
+import { IconBadge } from "@/components/svg-components/icon-badge";
 import { ClipPath, Defs, G, Path, Rect, Svg } from "react-native-svg";
 
 type IconProps = {
@@ -46,4 +47,10 @@ export function AdviceIcon({ size = 20 }: IconProps) {
   );
 }
 
-export const AdviceBtnIcon = AdviceIcon;
+export function AdviceBtnIcon({ size = 20 }: IconProps) {
+  return (
+    <IconBadge>
+      <AdviceIcon size={size} />
+    </IconBadge>
+  );
+}

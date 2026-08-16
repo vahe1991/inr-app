@@ -1,3 +1,4 @@
+import { IconBadge } from "@/components/svg-components/icon-badge";
 import { Path, Svg } from "react-native-svg";
 
 type IconProps = {
@@ -23,4 +24,10 @@ export function ComplexityIcon({ size = 20 }: IconProps) {
   );
 }
 
-export const ComplexityBtnIcon = ComplexityIcon;
+export function ComplexityBtnIcon({ size = 20 }: IconProps) {
+  return (
+    <IconBadge>
+      <ComplexityIcon size={size} />
+    </IconBadge>
+  );
+}

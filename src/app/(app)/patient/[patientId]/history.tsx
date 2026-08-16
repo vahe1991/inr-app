@@ -1,22 +1,126 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
+import { SuccessIcon } from "@/components/svg-components/success-icon";
+import { TrashIcon } from "@/components/svg-components/trash-icon";
+import { WarningIcon } from "@/components/svg-components/warning-icon";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { SuccessModal } from "@/components/ui/SuccessModal";
 import { HY } from "@/constants/hy";
-import { usePatientAllInr } from "@/hooks/usePatientInr";
+import { useDeletePatientInr } from "@/hooks/inr-norm/useDeletePatientInr.hook";
+import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
+import { useGetPatientInr } from "@/hooks/inr-norm/useGetPatientInr.hook";
+import type { InrType } from "@/types/inr-types";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 export default function PatientInrHistoryScreen() {
   const router = useRouter();
-  const { patientId } = useLocalSearchParams<{ patientId: string }>();
-  const { items, isLoading } = usePatientAllInr(patientId);
+  const { patientId, created } = useLocalSearchParams<{
+    patientId: string;
+    created?: string;
+  }>();
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    created === "1" ? HY.inrAddedSuccess : null,
+  );
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
-  if (isLoading) return <LoadingScreen />;
+  const { inrPatentData } = useGetPatientInr({
+    patient_id: patientId ?? "",
+    date: dayjs(new Date()).format("YYYY-MM-DD"),
+  });
+  const { allInr, isLoading, refetch } = useGetPatientAllInr({
+    patient_id: patientId ?? "",
+    page: "1",
+    pageSize: "50",
+  });
+  const {
+    mutate: deletePatientInr,
+    isPending: isDeletingPatientInr,
+    variables,
+  } = useDeletePatientInr(() => {
+    setSuccessMessage(HY.inrDeletedSuccess);
+    void refetch();
+  });
 
-  const sorted = [...items].sort(
+  const sorted = [...(allInr?.items ?? [])].sort(
     (a, b) => dayjs(b.date).valueOf() - dayjs(a.date).valueOf(),
   );
+  const [latest, ...previous] = sorted;
+
+  const isInrInNormRange = (value: number) => {
+    if (!inrPatentData) return false;
+    return value > inrPatentData.normStart && value < inrPatentData.normEnd;
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetId === null) return;
+    deletePatientInr({ patient_id: patientId ?? "", inrId: deleteTargetId });
+    setDeleteTargetId(null);
+  };
+
+  const renderRow = (item: InrType) => (
+    <View
+      key={item.id}
+      className="mb-2 flex-row items-center justify-start gap-[12px] rounded-[8px] border border-brand-10 px-3 py-3"
+    >
+      <Text className="mr-[auto] font-medium text-sm text-grey-900">
+        {item.date ? dayjs(item.date).format("DD.MM.YYYY") : "."}
+      </Text>
+
+      <View
+        className="min-w-[79px] flex-row items-center justify-between gap-[8px] rounded-[4px] bg-brand-100 px-[12px] py-[4px]"
+        style={{
+          shadowColor: "#000",
+          shadowOffset: {
+            width: 0,
+            height: 1,
+          },
+          shadowOpacity: 0.2,
+          shadowRadius: 1.41,
+
+          elevation: 2,
+        }}
+      >
+        <Text className="text-[16px] text-brand-700">{item.value}</Text>
+        {isInrInNormRange(item.value) ? <SuccessIcon /> : <WarningIcon />}
+      </View>
+
+      {variables?.inrId === item.id && isDeletingPatientInr ? (
+        <ActivityIndicator size="small" color="#FF4D4F" />
+      ) : (
+        <Pressable
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={HY.delete}
+          onPress={() => setDeleteTargetId(item.id)}
+        >
+          <TrashIcon />
+        </Pressable>
+      )}
+    </View>
+  );
+
+  if (isLoading)
+    return (
+      <>
+        <LoadingScreen />
+        <SuccessModal
+          visible={successMessage !== null}
+          title={successMessage ?? ""}
+          onClose={() => setSuccessMessage(null)}
+        />
+      </>
+    );
 
   return (
     <AuthenticatedScreen contentClassName="flex-1">
@@ -27,38 +131,48 @@ export default function PatientInrHistoryScreen() {
       >
         <PatientSubHeader
           title={HY.inrHistory}
+          description={HY.allInrResults}
+          icon={<HeartBtnIcon />}
           onBack={() => router.back()}
         />
-        {sorted.length === 0 ? (
+
+        {!latest ? (
           <Text className="text-sm text-calendar-text-secondary">
             {HY.noInrResults}
           </Text>
         ) : (
-          sorted.map((item) => (
-            <View
-              key={item.id}
-              className="mb-2 flex-row items-center justify-between rounded-[14px] bg-brand-50 px-3 py-3"
-            >
-              <View className="mr-3 flex-1">
-                <Text className="font-medium text-sm text-grey-900">
-                  {dayjs(item.date).format("DD.MM.YYYY")}
+          <>
+            <Text className="mb-2 font-[600] text-[16px] text-grey-900">
+              {HY.latestInrResult}
+            </Text>
+            {renderRow(latest)}
+
+            {previous.length ? (
+              <>
+                <Text className="mb-2 mt-4 font-[600] text-[16px] text-grey-900">
+                  {HY.previousResults}
                 </Text>
-                {item.comment ? (
-                  <Text
-                    className="text-xs text-calendar-text-muted"
-                    numberOfLines={1}
-                  >
-                    {item.comment}
-                  </Text>
-                ) : null}
-              </View>
-              <Text className="font-bold text-base text-calendar-primary">
-                {item.value}
-              </Text>
-            </View>
-          ))
+                {previous.map(renderRow)}
+              </>
+            ) : null}
+          </>
         )}
       </ScrollView>
+
+      <SuccessModal
+        visible={successMessage !== null}
+        title={successMessage ?? ""}
+        onClose={() => setSuccessMessage(null)}
+      />
+
+      <ConfirmModal
+        visible={deleteTargetId !== null}
+        title={HY.deleteInrConfirm}
+        confirmLabel={HY.delete}
+        destructive
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </AuthenticatedScreen>
   );
 }

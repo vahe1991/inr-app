@@ -1,3 +1,4 @@
+import { IconBadge } from "@/components/svg-components/icon-badge";
 import { Path, Svg } from "react-native-svg";
 
 type IconProps = {
@@ -15,4 +16,10 @@ export function CalendarIcon({ size = 16 }: IconProps) {
   );
 }
 
-export const CalendarBtnIcon = CalendarIcon;
+export function CalendarBtnIcon({ size = 20 }: IconProps) {
+  return (
+    <IconBadge>
+      <CalendarIcon size={size} />
+    </IconBadge>
+  );
+}

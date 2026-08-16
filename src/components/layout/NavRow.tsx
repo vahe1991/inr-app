@@ -13,7 +13,7 @@ export function NavRow({
   return (
     <Pressable
       onPress={onPress}
-      className=" flex-row items-center gap-3 rounded-[14px] bg-brand-50 px-[20px] py-[13px] active:opacity-80"
+      className=" flex-row items-center gap-3 rounded-[14px] bg-brand-50 px-[20px] py-[13px] active:bg-brand-100"
     >
       <View
         style={{

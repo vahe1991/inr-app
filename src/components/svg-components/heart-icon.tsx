@@ -15,5 +15,3 @@ export function HeartIcon({ size = 20 }: IconProps) {
     </Svg>
   );
 }
-
-export const HeartBtnIcon = HeartIcon;

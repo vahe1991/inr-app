@@ -3,9 +3,9 @@ import type { InvestigationApiResponse } from "@/types/inr-types";
 import { useQuery } from "@tanstack/react-query";
 
 export const useInrInvestigationsList = (
-  params: Record<string, string | number> = {},
+  params?: Record<string, string | number>,
 ) => {
-  const { data, isLoading, isFetching, isError, refetch } =
+  const { data, isLoading, refetch, isError, isFetching } =
     useQuery<InvestigationApiResponse>({
       queryKey: ["inr-investigations", params],
       queryFn: () => inrNormApi.getInrInvestigations(params),
@@ -13,11 +13,11 @@ export const useInrInvestigationsList = (
     });
 
   return {
-    inrInvestigations: data?.data.items ?? [],
-    meta: data?.data.meta,
+    inrInvestigations: data?.data?.items,
     isLoading,
-    isFetching,
-    isError,
     refetch,
+    isError,
+    isFetching,
+    meta: data?.data?.meta,
   };
 };

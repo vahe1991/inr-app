@@ -3,7 +3,7 @@ import { PatientCard } from "@/components/patient/PatientCard";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { TextField } from "@/components/ui/TextField";
 import { HY } from "@/constants/hy";
-import { usePatientsList } from "@/hooks/usePatientsList";
+import { usePatientsList } from "@/hooks/patient/useGetPatientList.hook";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";

@@ -19,7 +19,7 @@ export function AuthenticatedScreen({
   contentClassName = "flex-1",
 }: AuthenticatedScreenProps) {
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-white" edges={["top", "bottom"]}>
       <AppHeader title={title} left={left} right={right} showMenu />
       <View className={contentClassName}>{children}</View>
     </SafeAreaView>

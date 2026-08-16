@@ -1,14 +1,22 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { CalendarBtnIcon } from "@/components/svg-components/calendar-icon";
 import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/TextField";
+import { FormDateField } from "@/components/ui/FormDateField";
+import { FormTextField } from "@/components/ui/FormTextField";
 import { HY } from "@/constants/hy";
 import { calendarApi } from "@/services/calendar.api";
 import type { InrRecord } from "@/types/calendar.types";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+
+type CalendarDoseForm = {
+  dose: string;
+  nextTest: string;
+};
 
 export default function PatientCalendarScreen() {
   const router = useRouter();
@@ -16,9 +24,15 @@ export default function PatientCalendarScreen() {
   const [month, setMonth] = useState(dayjs().startOf("month"));
   const [selected, setSelected] = useState(dayjs().format("YYYY-MM-DD"));
   const [records, setRecords] = useState<InrRecord[]>([]);
-  const [dose, setDose] = useState("0.75");
-  const [nextTest, setNextTest] = useState("");
-  const [saving, setSaving] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<CalendarDoseForm>({
+    defaultValues: { dose: "0.75", nextTest: "" },
+  });
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -34,9 +48,11 @@ export default function PatientCalendarScreen() {
 
   useEffect(() => {
     const current = records.find((r) => r.date === selected);
-    setDose(String(current?.warfarinDoseMg ?? 0.75));
-    setNextTest(current?.nextTestDate ?? "");
-  }, [records, selected]);
+    reset({
+      dose: String(current?.warfarinDoseMg ?? 0.75),
+      nextTest: current?.nextTestDate ?? "",
+    });
+  }, [records, selected, reset]);
 
   const days = useMemo(() => {
     const start = month.startOf("month").startOf("week").add(1, "day"); // Monday-ish
@@ -53,26 +69,16 @@ export default function PatientCalendarScreen() {
     return map;
   }, [records]);
 
-  const onSave = async () => {
+  const onSave = async ({ dose, nextTest }: CalendarDoseForm) => {
     if (!patientId) return;
-    const amount = Number(dose);
-    if (Number.isNaN(amount) || amount < 0) {
-      Alert.alert(HY.brand, HY.doseMg);
-      return;
-    }
-    setSaving(true);
-    try {
-      await calendarApi.upsertRecord({
-        date: selected,
-        warfarinDoseMg: amount,
-        nextTestDate: nextTest || undefined,
-        patientId,
-      });
-      await load();
-      Alert.alert(HY.saved, HY.dosage);
-    } finally {
-      setSaving(false);
-    }
+    await calendarApi.upsertRecord({
+      date: selected,
+      warfarinDoseMg: Number(dose),
+      nextTestDate: nextTest || undefined,
+      patientId,
+    });
+    await load();
+    Alert.alert(HY.saved, HY.dosage);
   };
 
   return (
@@ -82,7 +88,12 @@ export default function PatientCalendarScreen() {
         contentContainerClassName="px-4 pb-10 pt-3"
         keyboardShouldPersistTaps="handled"
       >
-        <PatientSubHeader title={HY.calendar} onBack={() => router.back()} />
+        <PatientSubHeader
+          title={HY.calendar}
+          description={HY.dosageCalendar}
+          icon={<CalendarBtnIcon />}
+          onBack={() => router.back()}
+        />
         <Text className="mb-3 text-xs text-calendar-text-secondary">
           {HY.calendarLocalNote}
         </Text>
@@ -100,7 +111,7 @@ export default function PatientCalendarScreen() {
         </View>
 
         <View className="mb-2 flex-row">
-          {["Երկ", "Երք", "Չրք", "Հնգ", "Ուր", "Շբթ", "Կիր"].map((d) => (
+          {HY.weekdaysShort.map((d) => (
             <Text
               key={d}
               className="flex-1 text-center text-[11px] text-calendar-text-muted"
@@ -152,19 +163,31 @@ export default function PatientCalendarScreen() {
           <Text className="mb-2 font-semibold text-sm text-grey-900">
             {dayjs(selected).format("DD.MM.YYYY")}
           </Text>
-          <TextField
+          <FormTextField
+            control={control}
+            name="dose"
+            rules={{
+              required: HY.requiredField,
+              validate: (raw) =>
+                (!Number.isNaN(Number(raw)) && Number(raw) >= 0) ||
+                HY.invalidDose,
+            }}
             label={HY.doseMg}
-            value={dose}
-            onChangeText={setDose}
             keyboardType="decimal-pad"
           />
-          <TextField
+          <FormDateField
+            control={control}
+            name="nextTest"
+            valueFormat="YYYY-MM-DD"
             label={HY.nextTest}
-            value={nextTest}
-            onChangeText={setNextTest}
-            placeholder="YYYY-MM-DD"
+            displayFormat="DD.MM.YYYY"
+            placeholder={HY.notScheduled}
           />
-          <Button title={HY.save} onPress={onSave} loading={saving} />
+          <Button
+            title={HY.save}
+            onPress={handleSubmit(onSave)}
+            loading={isSubmitting}
+          />
         </View>
       </ScrollView>
     </AuthenticatedScreen>
