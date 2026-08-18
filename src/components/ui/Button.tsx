@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, Text } from "react-native";
+import type { ReactNode } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 type ButtonProps = {
   title: string;
@@ -6,6 +7,8 @@ type ButtonProps = {
   loading?: boolean;
   disabled?: boolean;
   variant?: "primary" | "outline" | "ghost" | "destructive";
+  /** Pass a render function to paint the icon with the current content color. */
+  icon?: ReactNode | ((color: string) => ReactNode);
   className?: string;
 };
 
@@ -15,6 +18,7 @@ export function Button({
   loading,
   disabled,
   variant = "primary",
+  icon,
   className = "",
 }: ButtonProps) {
   const base =
@@ -32,15 +36,20 @@ export function Button({
     destructive: "font-semibold text-white",
   };
 
+  const contentColors = {
+    primary: "#ffffff",
+    outline: "#5d4081",
+    ghost: "#6b5f82",
+    destructive: "#ffffff",
+  };
+
   const isDisabled = Boolean(disabled || loading);
-  const disabledPrimary =
-    variant === "primary" && isDisabled && !loading
-      ? "bg-grey-10"
-      : variants[variant];
-  const disabledText =
-    variant === "primary" && isDisabled && !loading
-      ? "font-normal text-[14px] text-grey-300"
-      : textVariants[variant];
+  const isDimmed = isDisabled && !loading && variant === "primary";
+  const disabledPrimary = isDimmed ? "bg-grey-10" : variants[variant];
+  const disabledText = isDimmed
+    ? "font-normal text-[14px] text-grey-300"
+    : textVariants[variant];
+  const contentColor = isDimmed ? "#bfbfbf" : contentColors[variant];
 
   return (
     <Pressable
@@ -57,7 +66,10 @@ export function Button({
           }
         />
       ) : (
-        <Text className={`text-base ${disabledText}`}>{title}</Text>
+        <View className="flex-row items-center gap-2">
+          {typeof icon === "function" ? icon(contentColor) : icon}
+          <Text className={`text-base ${disabledText}`}>{title}</Text>
+        </View>
       )}
     </Pressable>
   );

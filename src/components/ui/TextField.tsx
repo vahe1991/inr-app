@@ -1,3 +1,4 @@
+import { SearchIcon } from "@/components/svg-components/search-icon";
 import { SymbolView } from "expo-symbols";
 import { forwardRef, useState, type ReactNode } from "react";
 import {
@@ -28,6 +29,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
       showSearchIcon = false,
       rightAccessory,
       editable = true,
+      multiline,
       ...props
     },
     ref,
@@ -48,21 +50,15 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
         ) : null}
 
         <View
-          className={`min-h-12 flex-row items-center rounded-lg bg-white px-4 py-3 ${
+          className={`flex-row rounded-lg bg-white px-4 py-3 ${
+            multiline ? "min-h-24 items-start" : "min-h-12 items-center"
+          } ${
             error ? "border border-calendar-danger" : "border border-brand-700"
           }`}
         >
           {showSearchIcon ? (
             <View className="mr-2 items-center justify-center">
-              <SymbolView
-                name={{
-                  ios: "magnifyingglass",
-                  android: "search",
-                  web: "search",
-                }}
-                size={18}
-                tintColor="#6A4A98"
-              />
+              <SearchIcon />
             </View>
           ) : null}
 
@@ -70,9 +66,11 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
             ref={ref}
             placeholderTextColor="#BFBFBF"
             editable={editable}
-            className={`min-h-[24px] flex-1 p-0 font-sans text-[16px] leading-6 text-grey-900 ${
-              isPassword ? "pr-1" : ""
-            }`}
+            multiline={multiline}
+            textAlignVertical={multiline ? "top" : undefined}
+            className={`flex-1 p-0 font-sans text-[16px] leading-6 text-grey-900 ${
+              multiline ? "min-h-[48px]" : "min-h-[24px]"
+            } ${isPassword ? "pr-1" : ""}`}
             secureTextEntry={isPassword && !visible}
             {...props}
           />

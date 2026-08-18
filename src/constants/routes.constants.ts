@@ -16,8 +16,12 @@ export const INRAppRoutes = {
     `/patient/${patientId}/calendar` as const,
   patientAdvice: (patientId: string | number) =>
     `/patient/${patientId}/advice` as const,
+  patientAdviceForm: (patientId: string | number) =>
+    `/patient/${patientId}/advice-form` as const,
   patientComplications: (patientId: string | number) =>
     `/patient/${patientId}/complications` as const,
+  patientComplicationForm: (patientId: string | number) =>
+    `/patient/${patientId}/complication-form` as const,
   patientEditNorm: (patientId: string | number) =>
     `/patient/${patientId}/edit-norm` as const,
 };

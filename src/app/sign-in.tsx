@@ -1,4 +1,5 @@
 import { AuthCard } from "@/components/layout/AuthCard";
+import { SuccessIcon } from "@/components/svg-components/success-icon";
 import { Button } from "@/components/ui/Button";
 import { FormTextField } from "@/components/ui/FormTextField";
 import { AUTH_COPY } from "@/constants/authCopy";
@@ -33,9 +34,13 @@ export default function SignInScreen() {
 
   useEffect(() => {
     void (async () => {
-      const remembered = await storage.getRememberEmail();
+      const remembered = await storage.getRememberCredentials();
       if (remembered) {
-        reset({ email: remembered, password: "", remember: true });
+        reset({
+          email: remembered.email,
+          password: remembered.password,
+          remember: true,
+        });
       }
     })();
   }, [reset]);
@@ -43,8 +48,16 @@ export default function SignInScreen() {
   const onSubmit = async ({ email, password, remember }: SignInForm) => {
     clearErrors("root");
     try {
+      if (remember) {
+        await storage.setRememberCredentials({
+          email: email.trim(),
+          password,
+        });
+      } else {
+        await storage.setRememberCredentials(null);
+      }
+
       await logIn({ email: email.trim(), password });
-      await storage.setRememberEmail(remember ? email.trim() : null);
     } catch (error) {
       const axiosError = error as AxiosError<{
         message?: string;
@@ -100,7 +113,10 @@ export default function SignInScreen() {
           render={({ field: { value, onChange } }) => (
             <Pressable
               onPress={() => onChange(!value)}
-              className="flex-row items-center gap-2"
+              hitSlop={8}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: Boolean(value) }}
+              className="flex-row items-center gap-2 py-1"
             >
               <View
                 className={`h-6 w-6 items-center justify-center rounded border ${
@@ -109,7 +125,9 @@ export default function SignInScreen() {
                     : "border-calendar-border bg-white"
                 }`}
               >
-                {value ? <Text className="text-xs text-white">✓</Text> : null}
+                {value ? (
+                  <SuccessIcon color="white" width={14} height={10} />
+                ) : null}
               </View>
               <Text className="font-medium text-[12px] text-grey-500">
                 {AUTH_COPY.login.rememberMe}

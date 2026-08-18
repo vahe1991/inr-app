@@ -129,12 +129,21 @@ export interface PatientEditType {
   }[];
 }
 
+export type InrAdviceEntryType = {
+  id: number;
+  isActual: number;
+  advice: string;
+  sortOrder: number;
+};
+
 export type InrAdviceType = {
   id: number;
   patientId: number | string;
   date: string;
-  isActual: number;
-  advice: string;
+  advices?: InrAdviceEntryType[];
+  /** Older API shape: a JSON stringified list of advice lines. */
+  isActual?: number;
+  advice?: string;
 };
 
 export type InrAdviceResponse = {
@@ -146,13 +155,23 @@ export type InrAdviceApiResponse = {
   data: InrAdviceResponse;
 };
 
+export type InrComplicationEntryType = {
+  id: number;
+  isActual: number;
+  complicationType: number;
+  complication: string;
+  sortOrder: number;
+};
+
 export type InrComplicationType = {
   id: number;
   patientId: number;
   date: string;
-  isActual: number;
-  complicationType: number;
-  complication: string;
+  complications?: InrComplicationEntryType[];
+  /** Older API shape: a JSON stringified list of notes. */
+  isActual?: number;
+  complicationType?: number;
+  complication?: string;
 };
 
 export type InrComplicationResponse = {

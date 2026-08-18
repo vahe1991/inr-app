@@ -6,7 +6,13 @@ const KEYS = {
   email: "email",
   permissions: "permissions",
   rememberEmail: "remember_email",
+  rememberPassword: "remember_password",
 } as const;
+
+export type RememberedCredentials = {
+  email: string;
+  password: string;
+};
 
 export const storage = {
   async getToken() {
@@ -20,6 +26,30 @@ export const storage = {
   },
   async getName() {
     return AsyncStorage.getItem(KEYS.name);
+  },
+  async getRememberCredentials(): Promise<RememberedCredentials | null> {
+    const [email, password] = await Promise.all([
+      AsyncStorage.getItem(KEYS.rememberEmail),
+      AsyncStorage.getItem(KEYS.rememberPassword),
+    ]);
+
+    if (!email) return null;
+
+    return { email, password: password ?? "" };
+  },
+  async setRememberCredentials(credentials: RememberedCredentials | null) {
+    if (credentials?.email) {
+      await AsyncStorage.multiSet([
+        [KEYS.rememberEmail, credentials.email],
+        [KEYS.rememberPassword, credentials.password],
+      ]);
+      return;
+    }
+
+    await AsyncStorage.multiRemove([
+      KEYS.rememberEmail,
+      KEYS.rememberPassword,
+    ]);
   },
   async getRememberEmail() {
     return AsyncStorage.getItem(KEYS.rememberEmail);

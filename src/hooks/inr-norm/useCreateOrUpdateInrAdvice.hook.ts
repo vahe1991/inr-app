@@ -13,7 +13,6 @@ export const useCreateOrUpdatePatientAdvice = (
     mutationFn: inrNormApi.createOrUpdatePatientInrAdvice,
     mutationKey: ["create-or-update-inr-advice"],
     onSuccess: async (data) => {
-      Alert.alert(HY.saved, "Պացիենտի տվյալները պահպանվեցին");
       await queryClient.invalidateQueries({
         queryKey: ["patient-inr-advice"],
       });

@@ -1,7 +1,15 @@
 import { HY } from "@/constants/hy";
 import { SymbolView } from "expo-symbols";
-import { useState } from "react";
-import { FlatList, Modal, Pressable, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+  type View as ViewType,
+} from "react-native";
 
 export type SelectOption = {
   label: string;
@@ -33,13 +41,28 @@ export function SelectField({
   error,
   containerClassName = "",
 }: SelectFieldProps) {
+  const triggerRef = useRef<ViewType>(null);
+  const { height: windowHeight } = useWindowDimensions();
   const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const selected = options.find((option) => option.value === value);
 
   const close = () => {
     setOpen(false);
     onBlur?.();
   };
+
+  const openDropdown = () => {
+    if (disabled) return;
+
+    triggerRef.current?.measureInWindow((x, y, width, height) => {
+      setAnchor({ x, y, width, height });
+      setOpen(true);
+    });
+  };
+
+  const top = anchor.y + anchor.height + 4;
+  const maxHeight = Math.max(windowHeight - top - 16, 120);
 
   return (
     <View className={`mb-3 ${containerClassName}`}>
@@ -54,9 +77,11 @@ export function SelectField({
       ) : null}
 
       <Pressable
-        onPress={() => !disabled && setOpen(true)}
+        ref={triggerRef}
+        collapsable={false}
+        onPress={openDropdown}
         accessibilityRole="button"
-        accessibilityState={{ disabled }}
+        accessibilityState={{ disabled, expanded: open }}
         className={`min-h-12 flex-row items-center rounded-lg px-4 py-3 ${
           disabled ? "bg-brand-10" : "bg-white"
         } ${error ? "border border-calendar-danger" : "border border-brand-700"}`}
@@ -71,9 +96,9 @@ export function SelectField({
         </Text>
         <SymbolView
           name={{
-            ios: "chevron.down",
-            android: "keyboard_arrow_down",
-            web: "keyboard_arrow_down",
+            ios: open ? "chevron.up" : "chevron.down",
+            android: open ? "keyboard_arrow_up" : "keyboard_arrow_down",
+            web: open ? "keyboard_arrow_up" : "keyboard_arrow_down",
           }}
           size={16}
           tintColor={disabled ? "#BFBFBF" : "#6A4A98"}
@@ -89,61 +114,61 @@ export function SelectField({
       <Modal
         visible={open}
         transparent
-        animationType="fade"
+        animationType="none"
         statusBarTranslucent
         onRequestClose={close}
       >
-        <Pressable
-          onPress={close}
-          className="flex-1 justify-end bg-black/40 px-4 pb-8"
-        >
-          <Pressable className="max-h-[60%] overflow-hidden rounded-3xl bg-white">
-            <View className="border-b border-brand-100 px-5 py-4">
-              <Text className="font-semibold text-[16px] text-grey-900">
-                {label ?? placeholder ?? HY.select}
-              </Text>
-            </View>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => String(item.value)}
-              renderItem={({ item }) => {
+        <Pressable onPress={close} className="flex-1">
+          <Pressable
+            onPress={() => {}}
+            style={{
+              position: "absolute",
+              top,
+              left: anchor.x,
+              width: anchor.width,
+              maxHeight,
+            }}
+            className="overflow-hidden rounded-lg border border-brand-700 bg-white"
+          >
+            <ScrollView keyboardShouldPersistTaps="handled" bounces={false}>
+              {options.map((item, index) => {
                 const isSelected = item.value === value;
+
                 return (
-                  <Pressable
-                    onPress={() => {
-                      onChange(item.value);
-                      close();
-                    }}
-                    className="flex-row items-center gap-3 px-5 py-3.5 active:bg-brand-10"
-                  >
-                    <Text
-                      className={`flex-1 text-[15px] ${
-                        isSelected
-                          ? "font-semibold text-brand-700"
-                          : "text-grey-900"
-                      }`}
+                  <View key={String(item.value)}>
+                    {index > 0 ? <View className="h-px bg-brand-10" /> : null}
+                    <Pressable
+                      onPress={() => {
+                        onChange(item.value);
+                        close();
+                      }}
+                      className="flex-row items-center gap-3 px-4 py-3 active:bg-brand-10"
                     >
-                      {item.label}
-                    </Text>
-                    {isSelected ? (
-                      <SymbolView
-                        name={{
-                          ios: "checkmark",
-                          android: "check",
-                          web: "check",
-                        }}
-                        size={16}
-                        tintColor="#6A4A98"
-                      />
-                    ) : null}
-                  </Pressable>
+                      <Text
+                        className={`flex-1 text-[15px] ${
+                          isSelected
+                            ? "font-semibold text-brand-700"
+                            : "text-grey-900"
+                        }`}
+                      >
+                        {item.label}
+                      </Text>
+                      {isSelected ? (
+                        <SymbolView
+                          name={{
+                            ios: "checkmark",
+                            android: "check",
+                            web: "check",
+                          }}
+                          size={16}
+                          tintColor="#6A4A98"
+                        />
+                      ) : null}
+                    </Pressable>
+                  </View>
                 );
-              }}
-              ItemSeparatorComponent={() => (
-                <View className="h-px bg-brand-10" />
-              )}
-              keyboardShouldPersistTaps="handled"
-            />
+              })}
+            </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>

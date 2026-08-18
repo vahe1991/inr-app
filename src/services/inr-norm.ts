@@ -16,6 +16,22 @@ export type InrFileInput = {
   mimeType?: string;
 };
 
+/** `id` is sent only when the entry already exists (update). */
+export type InrAdviceInput = {
+  id?: number;
+  isActual: number;
+  advice: string;
+  sortOrder: number;
+};
+
+export type InrComplicationInput = {
+  id?: number;
+  isActual: number;
+  complicationType: number | string;
+  complication: string;
+  sortOrder?: number;
+};
+
 export const inrNormApi = {
   async getInrInvestigations(
     params?: Record<string, string | number>,
@@ -115,13 +131,10 @@ export const inrNormApi = {
     id?: number;
     patient_id: string | number;
     date: string;
-    isActual: number;
-    advice: string;
+    advices: InrAdviceInput[];
   }) {
     const { patient_id, ...data } = mutateData;
-    return (
-      await $axios.post(`patients/${patient_id}/inr-advice`, data)
-    ).data;
+    return (await $axios.post(`patients/${patient_id}/inr-advice`, data)).data;
   },
 
   async getPatientInrComplication(
@@ -140,14 +153,11 @@ export const inrNormApi = {
     id?: number;
     patient_id: string;
     date: string;
-    isActual: number;
-    complicationType: string;
-    complication: string;
+    complications: InrComplicationInput[];
   }) {
     const { patient_id, ...data } = mutateData;
-    return (
-      await $axios.post(`patients/${patient_id}/inr-complication`, data)
-    ).data;
+    return (await $axios.post(`patients/${patient_id}/inr-complication`, data))
+      .data;
   },
 
   async deletePatientInrNorm({

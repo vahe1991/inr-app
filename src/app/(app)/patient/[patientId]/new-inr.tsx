@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { FormDateField } from "@/components/ui/FormDateField";
 import { FormSelectField } from "@/components/ui/FormSelectField";
 import { FormTextField } from "@/components/ui/FormTextField";
+import { InrScanModal, type InrScanResult } from "@/components/ui/InrScanModal";
 import { HY } from "@/constants/hy";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { useCreatePatientInr } from "@/hooks/inr-norm/useCreatePatientInr.hook";
@@ -12,9 +13,10 @@ import { useLocations } from "@/hooks/useLocations.hook";
 import type { InrFileInput } from "@/services/inr-norm";
 import dayjs from "dayjs";
 import * as DocumentPicker from "expo-document-picker";
+import { isSupported } from "expo-mlkit-ocr";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
@@ -41,7 +43,7 @@ export default function NewInrScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
 
   const { locations } = useLocations();
-
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const { control, handleSubmit, setValue, watch, formState } =
     useForm<NewInrForm>({
       mode: "onChange",
@@ -49,9 +51,7 @@ export default function NewInrScreen() {
     });
 
   const { mutate: createPatientInr, isPending } = useCreatePatientInr(() => {
-    router.replace(
-      `${INRAppRoutes.patientHistory(patientId ?? "")}?created=1`,
-    );
+    router.replace(`${INRAppRoutes.patientHistory(patientId ?? "")}?created=1`);
   });
 
   const regions = useMemo(
@@ -95,6 +95,39 @@ export default function NewInrScreen() {
     });
   };
 
+  const openScanner = () => {
+    if (!isSupported()) {
+      Alert.alert(HY.error, HY.scanUnsupported);
+      return;
+    }
+
+    setIsScannerOpen(true);
+  };
+
+  const handleDetected = ({ fields, file }: InrScanResult) => {
+    setIsScannerOpen(false);
+
+    if (fields.date) {
+      setValue("date", fields.date, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+
+    if (fields.value) {
+      setValue("value", fields.value, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+
+    setValue("file", file, { shouldDirty: true });
+
+    if (!fields.date || !fields.value) {
+      Alert.alert(HY.scanDocument, HY.scanPartial);
+    }
+  };
+
   const pickFile = async (onChange: (file?: InrFileInput) => void) => {
     const result = await DocumentPicker.getDocumentAsync({
       type: ["application/pdf", "image/*"],
@@ -130,6 +163,31 @@ export default function NewInrScreen() {
             icon={<HeartBtnIcon />}
             onBack={() => router.back()}
           />
+
+          <Pressable
+            onPress={openScanner}
+            className="mb-4 flex-row items-center gap-3 rounded-lg border border-brand-700 bg-brand-10 px-4 py-3 active:opacity-80"
+            accessibilityRole="button"
+            accessibilityLabel={HY.scanDocument}
+          >
+            <SymbolView
+              name={{
+                ios: "doc.viewfinder",
+                android: "document_scanner",
+                web: "document_scanner",
+              }}
+              size={24}
+              tintColor="#502E7F"
+            />
+            <View className="min-w-0 flex-1">
+              <Text className="font-medium text-[14px] leading-5 text-brand-700">
+                {HY.scanDocument}
+              </Text>
+              <Text className="mt-0.5 text-[12px] leading-[18px] text-grey-400">
+                {HY.scanHint}
+              </Text>
+            </View>
+          </Pressable>
 
           <View className="gap-3">
             <FormDateField
@@ -250,6 +308,12 @@ export default function NewInrScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <InrScanModal
+        visible={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onDetected={handleDetected}
+      />
     </AuthenticatedScreen>
   );
 }

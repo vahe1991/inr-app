@@ -40,7 +40,30 @@
           "imageWidth": 230
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-mlkit-ocr",
+        {
+          "iosEngine": "auto"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Թույլատրեք ֆոտոխցիկի օգտագործումը՝ վերլուծության թերթիկը սկանավորելու համար։",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      "./plugins/withAndroidMainPackage"
     ],
     "experiments": {
       "typedRoutes": false,

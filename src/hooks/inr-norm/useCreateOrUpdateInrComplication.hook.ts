@@ -13,7 +13,6 @@ export const useCreateOrUpdateInrComplication = (
     mutationFn: inrNormApi.createOrUpdateInrComplication,
     mutationKey: ["create-or-update-inr-complication"],
     onSuccess: async (data) => {
-      Alert.alert(HY.saved, "Պացիենտի տվյալները պահպանվեցին");
       await queryClient.invalidateQueries({
         queryKey: ["patient-inr-complication"],
       });
