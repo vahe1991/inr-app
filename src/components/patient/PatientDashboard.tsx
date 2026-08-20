@@ -20,7 +20,6 @@ type PatientDashboardProps = {
   normStart?: number | null;
   normEnd?: number | null;
   currentInr?: number | null;
-  ttr?: number | null;
   dailyDose?: number | string | null;
   nextTestLabel?: string | null;
   onBack: () => void;
@@ -32,7 +31,6 @@ export function PatientDashboard({
   normStart,
   normEnd,
   currentInr,
-  ttr,
   dailyDose = 0,
   nextTestLabel,
   onBack,
@@ -70,10 +68,10 @@ export function PatientDashboard({
 
       <View className="gap-2 px-4 pb-8">
         <InrScaleCard
+          patientId={patientId}
           normStart={normStart}
           normEnd={normEnd}
           currentInr={currentInr}
-          ttr={ttr}
           onEdit={() => router.push(INRAppRoutes.patientEditNorm(patientId))}
         />
 

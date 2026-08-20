@@ -4,16 +4,33 @@ import { CalendarBtnIcon } from "@/components/svg-components/calendar-icon";
 import { Button } from "@/components/ui/Button";
 import { FormDateField } from "@/components/ui/FormDateField";
 import { FormTextField } from "@/components/ui/FormTextField";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
-import { calendarApi } from "@/services/calendar.api";
-import type { InrRecord } from "@/types/calendar.types";
+import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
+import { useMutateInrWarfarinDosage } from "@/hooks/calendar/useMutateInrWarfarinDosage.hook";
+import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
+import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
+import type { InrWarfarinCalendarItem } from "@/types/calendar-types";
 import dayjs from "dayjs";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
+function asCalendarItems(payload: unknown): InrWarfarinCalendarItem[] {
+  if (Array.isArray(payload)) return payload;
+  if (
+    payload &&
+    typeof payload === "object" &&
+    Array.isArray((payload as { items?: unknown }).items)
+  ) {
+    return (payload as { items: InrWarfarinCalendarItem[] }).items;
+  }
+  return [];
+}
+
 type CalendarDoseForm = {
+  inrResult: string;
   dose: string;
   nextTest: string;
 };
@@ -23,63 +40,98 @@ export default function PatientCalendarScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
   const [month, setMonth] = useState(dayjs().startOf("month"));
   const [selected, setSelected] = useState(dayjs().format("YYYY-MM-DD"));
-  const [records, setRecords] = useState<InrRecord[]>([]);
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = useForm<CalendarDoseForm>({
-    defaultValues: { dose: "0.75", nextTest: "" },
+  const { patient, isLoading: isLoadingPatient } = usePatientById(patientId);
+  const { calendarDosages, isLoadingCalendarDosage, refetch } =
+    useGetInrWarfarinCalendarDosage({
+      patient_id: patientId ?? "",
+      page: 1,
+      pageSize: 100,
+    });
+  const { allInr } = useGetPatientAllInr({
+    patient_id: patientId ?? "",
+    page: "1",
+    pageSize: "50",
   });
 
-  const load = useCallback(async () => {
-    if (!patientId) return;
-    const from = month.startOf("month").format("YYYY-MM-DD");
-    const to = month.endOf("month").format("YYYY-MM-DD");
-    const items = await calendarApi.getRecords(from, to, patientId);
-    setRecords(items);
-  }, [month, patientId]);
+  const { control, handleSubmit, reset } = useForm<CalendarDoseForm>({
+    defaultValues: { inrResult: "", dose: "0.75", nextTest: "" },
+  });
 
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    const current = records.find((r) => r.date === selected);
-    reset({
-      dose: String(current?.warfarinDoseMg ?? 0.75),
-      nextTest: current?.nextTestDate ?? "",
+  const { mutate: mutateInrWarfarinDosage, isPending } =
+    useMutateInrWarfarinDosage(() => {
+      Alert.alert(HY.saved, HY.dosage);
     });
-  }, [records, selected, reset]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch]),
+  );
+
+  const latestInr = useMemo(() => {
+    const items = allInr?.items ?? [];
+    if (!items.length) return "";
+    return String(
+      [...items].sort(
+        (a, b) => dayjs(b.date).valueOf() - dayjs(a.date).valueOf(),
+      )[0]?.value ?? "",
+    );
+  }, [allInr?.items]);
+
+  const calendarItems = useMemo(
+    () => asCalendarItems(calendarDosages),
+    [calendarDosages],
+  );
+
+  const recordByDate = useMemo(() => {
+    const map = new Map<string, InrWarfarinCalendarItem>();
+    calendarItems.forEach((item) =>
+      map.set(dayjs(item.date).format("YYYY-MM-DD"), item),
+    );
+    return map;
+  }, [calendarItems]);
+
+  const editing = recordByDate.get(selected);
+
+  useEffect(() => {
+    reset({
+      inrResult: latestInr,
+      dose: String(editing?.dosage ?? 0.75),
+      nextTest: "",
+    });
+  }, [editing, latestInr, reset]);
 
   const days = useMemo(() => {
-    const start = month.startOf("month").startOf("week").add(1, "day"); // Monday-ish
-    // dayjs week starts Sunday by default; build 42 cells from month start weekday
     const first = month.startOf("month");
-    const offset = (first.day() + 6) % 7; // Monday=0
+    const offset = (first.day() + 6) % 7;
     const gridStart = first.subtract(offset, "day");
     return Array.from({ length: 42 }, (_, i) => gridStart.add(i, "day"));
   }, [month]);
 
-  const recordByDate = useMemo(() => {
-    const map = new Map<string, InrRecord>();
-    records.forEach((r) => map.set(r.date, r));
-    return map;
-  }, [records]);
+  const onSave = ({ inrResult, dose, nextTest }: CalendarDoseForm) => {
+    if (!patientId) {
+      Alert.alert(HY.error, HY.patientNotFound);
+      return;
+    }
 
-  const onSave = async ({ dose, nextTest }: CalendarDoseForm) => {
-    if (!patientId) return;
-    await calendarApi.upsertRecord({
+    if (!patient?.doctorId) {
+      Alert.alert(HY.error, HY.patientNotFound);
+      return;
+    }
+
+    mutateInrWarfarinDosage({
+      id: editing?.id ?? 0,
+      patient_id: patientId,
+      doctor_id: String(patient.doctorId),
       date: selected,
-      warfarinDoseMg: Number(dose),
-      nextTestDate: nextTest || undefined,
-      patientId,
+      inr_result: Number(inrResult),
+      warfarine_dosage: Number(dose),
+      next_test_give_date: nextTest,
     });
-    await load();
-    Alert.alert(HY.saved, HY.dosage);
   };
+
+  if (isLoadingPatient || isLoadingCalendarDosage) return <LoadingScreen />;
 
   return (
     <AuthenticatedScreen contentClassName="flex-1">
@@ -94,9 +146,6 @@ export default function PatientCalendarScreen() {
           icon={<CalendarBtnIcon />}
           onBack={() => router.back()}
         />
-        <Text className="mb-3 text-xs text-calendar-text-secondary">
-          {HY.calendarLocalNote}
-        </Text>
 
         <View className="mb-3 flex-row items-center justify-between">
           <Pressable onPress={() => setMonth((m) => m.subtract(1, "month"))}>
@@ -165,6 +214,18 @@ export default function PatientCalendarScreen() {
           </Text>
           <FormTextField
             control={control}
+            name="inrResult"
+            rules={{
+              required: HY.requiredInrValue,
+              validate: (raw) =>
+                (!Number.isNaN(Number(raw)) && Number(raw) > 0) ||
+                HY.invalidInr,
+            }}
+            label={HY.enterInrValue}
+            keyboardType="decimal-pad"
+          />
+          <FormTextField
+            control={control}
             name="dose"
             rules={{
               required: HY.requiredField,
@@ -178,6 +239,7 @@ export default function PatientCalendarScreen() {
           <FormDateField
             control={control}
             name="nextTest"
+            rules={{ required: HY.requiredDate }}
             valueFormat="YYYY-MM-DD"
             label={HY.nextTest}
             displayFormat="DD.MM.YYYY"
@@ -186,7 +248,7 @@ export default function PatientCalendarScreen() {
           <Button
             title={HY.save}
             onPress={handleSubmit(onSave)}
-            loading={isSubmitting}
+            loading={isPending}
           />
         </View>
       </ScrollView>

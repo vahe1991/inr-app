@@ -1,6 +1,7 @@
 import { EditIcon } from "@/components/svg-components/edit-icon";
 import { HumanIcon } from "@/components/svg-components/human-icon";
 import { HY } from "@/constants/hy";
+import { useGetInrTTR } from "@/hooks/inr-norm/useGetInrTTR.hook";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -9,7 +10,7 @@ type InrScaleCardProps = {
   normStart?: number | null;
   normEnd?: number | null;
   currentInr?: number | null;
-  ttr?: number | null;
+  patientId: string;
   onEdit?: () => void;
 };
 
@@ -44,16 +45,16 @@ function ScaleTickLabel({ label, style }: { label: string; style: object }) {
 }
 
 export function InrScaleCard({
+  patientId,
   normStart,
   normEnd,
   currentInr,
-  ttr = 0,
   onEdit,
 }: InrScaleCardProps) {
   const start = Number(normStart ?? 0);
   const end = Number(normEnd ?? 0);
   const current = Number(currentInr ?? 0);
-
+  const { inrTTRData } = useGetInrTTR(patientId);
   const currentPosition = useMemo(() => {
     const min = start;
     const max = end;
@@ -170,7 +171,7 @@ export function InrScaleCard({
         <Text className="font-bold text-[16px] text-grey-900">
           {HY.ttr}{" "}
           <Text className="font-bold text-[16px] text-brand-500">
-            {ttr ?? 0}
+            {inrTTRData?.ttr ?? 0}
           </Text>
         </Text>
       </View>
