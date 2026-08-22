@@ -38,8 +38,6 @@ export default function YearCalendarScreen() {
     return next;
   }, [calendarDosages]);
 
-  if (isLoadingCalendarDosage) return <LoadingScreen />;
-
   const currentMonth = dayjs().month();
   const currentYear = dayjs().year();
 

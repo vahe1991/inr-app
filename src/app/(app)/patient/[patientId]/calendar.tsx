@@ -1,22 +1,21 @@
-import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { CreateCycleModal } from "@/components/calendar/CreateCycleModal";
 import { DayDoseModal } from "@/components/calendar/DayDoseModal";
-import { MonthCalendarGrid } from "@/components/calendar/MonthCalendarGrid";
 import type { DayMark } from "@/components/calendar/MonthCalendarGrid";
+import { MonthCalendarGrid } from "@/components/calendar/MonthCalendarGrid";
 import { MonthPickerSheet } from "@/components/calendar/MonthPickerSheet";
+import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
 import { Button } from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { asCalendarItems, type SavedCycleDay } from "@/helpers/calendarItems";
+import { useDeleteWarfarinCalendarDosage } from "@/hooks/calendar/useDeleteWarfarinCalendarDosage.hook";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
 import { useMutateInrWarfarinDosage as useMutateInrCycle } from "@/hooks/calendar/useMutateInrCyrcle.hook";
 import { useMutateInrWarfarinDosage } from "@/hooks/calendar/useMutateInrWarfarinDosage.hook";
 import { useMutateWarfarinCalendar } from "@/hooks/calendar/useMutateWarfarinCalendar.hook";
-import { useDeleteWarfarinCalendarDosage } from "@/hooks/calendar/useDeleteWarfarinCalendarDosage.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
 import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
 import dayjs from "dayjs";
@@ -28,7 +27,11 @@ type CalendarMode = "dose" | "test" | "calendar";
 
 export default function PatientCalendarScreen() {
   const router = useRouter();
-  const { patientId, mode: modeParam, date: dateParam } = useLocalSearchParams<{
+  const {
+    patientId,
+    mode: modeParam,
+    date: dateParam,
+  } = useLocalSearchParams<{
     patientId: string;
     mode?: CalendarMode | CalendarMode[];
     date?: string | string[];
@@ -51,13 +54,12 @@ export default function PatientCalendarScreen() {
   const [appliedDays, setAppliedDays] = useState<SavedCycleDay[]>([]);
   const [removeOpen, setRemoveOpen] = useState(false);
 
-  const { patient, isLoading: isLoadingPatient } = usePatientById(patientId);
-  const { calendarDosages, isLoadingCalendarDosage, refetch } =
-    useGetInrWarfarinCalendarDosage({
-      patient_id: patientId ?? "",
-      page: 1,
-      pageSize: 100,
-    });
+  const { patient } = usePatientById(patientId);
+  const { calendarDosages, refetch } = useGetInrWarfarinCalendarDosage({
+    patient_id: patientId ?? "",
+    page: 1,
+    pageSize: 100,
+  });
   const { allInr } = useGetPatientAllInr({
     patient_id: patientId ?? "",
     page: "1",
@@ -68,7 +70,8 @@ export default function PatientCalendarScreen() {
     useMutateWarfarinCalendar();
   const { mutateAsync: mutateDosage, isPending: savingDosage } =
     useMutateInrWarfarinDosage();
-  const { mutateAsync: mutateCycle, isPending: savingCycle } = useMutateInrCycle();
+  const { mutateAsync: mutateCycle, isPending: savingCycle } =
+    useMutateInrCycle();
   const { mutateAsync: deleteDosage, isPending: deleting } =
     useDeleteWarfarinCalendarDosage();
 
@@ -139,7 +142,11 @@ export default function PatientCalendarScreen() {
   const openDay = (date: string) => {
     setSelected(date);
     const existing = recordByDate.get(date);
-    setDose(existing?.dosage ?? appliedDays.find((item) => item.date === date)?.dosage ?? 2);
+    setDose(
+      existing?.dosage ??
+        appliedDays.find((item) => item.date === date)?.dosage ??
+        2,
+    );
     setIsNextTest(mode === "test" || nextTestDate === date);
     setDayOpen(true);
   };
@@ -242,8 +249,6 @@ export default function PatientCalendarScreen() {
     }
   };
 
-  if (isLoadingPatient || isLoadingCalendarDosage) return <LoadingScreen />;
-
   const cycleRangeLabel = appliedDays.length
     ? `${dayjs(appliedDays[0].date).format("DD")} - ${dayjs(
         appliedDays[appliedDays.length - 1].date,
@@ -254,97 +259,101 @@ export default function PatientCalendarScreen() {
 
   return (
     <AuthenticatedScreen contentClassName="flex-1">
-      <View className="flex-1">
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="px-4 pb-6 pt-3"
-          keyboardShouldPersistTaps="handled"
-        >
-          <PatientSubHeader
-            title={isActiveCycle ? HY.activeDosageCycle : title}
-            description={
-              isActiveCycle
-                ? `${HY.cycleApplied} ${cycleRangeLabel}`
-                : description
-            }
-            icon={<HeartBtnIcon />}
-            onBack={() => router.back()}
-          />
+      <View className="flex-1 px-4 pt-3">
+        <PatientSubHeader
+          title={isActiveCycle ? HY.activeDosageCycle : title}
+          description={
+            isActiveCycle
+              ? `${HY.cycleApplied} ${cycleRangeLabel}`
+              : description
+          }
+          icon={<HeartBtnIcon />}
+          onBack={() => router.back()}
+        />
 
-          <Text className="mb-3 text-[13px] text-grey-900">
-            {HY.selectDateForDoseOrTest}
-          </Text>
+        <View className="flex-1">
+          <ScrollView
+            className="flex-1"
+            contentContainerClassName="pb-6"
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text className="mb-3 text-[13px] text-grey-900">
+              {HY.selectDateForDoseOrTest}
+            </Text>
 
-          <MonthCalendarGrid
-            month={month}
-            selected={selected}
-            marks={marks}
-            onPrev={() => setMonth((value) => value.subtract(1, "month"))}
-            onNext={() => setMonth((value) => value.add(1, "month"))}
-            onPressTitle={() => setMonthPickerOpen(true)}
-            onSelectDay={openDay}
-          />
+            <MonthCalendarGrid
+              month={month}
+              selected={selected}
+              marks={marks}
+              onPrev={() => setMonth((value) => value.subtract(1, "month"))}
+              onNext={() => setMonth((value) => value.add(1, "month"))}
+              onPressTitle={() => setMonthPickerOpen(true)}
+              onSelectDay={openDay}
+            />
 
-          {nextTestDate ? (
-            <View className="mt-3 flex-row items-center gap-2">
-              <View className="h-2 w-2 rounded-full bg-calendar-danger" />
-              <Text className="text-[12px] text-grey-700">{HY.inrTestDay}</Text>
-            </View>
-          ) : null}
-        </ScrollView>
-
-        <View className="gap-2 px-4 pb-3 pt-2">
-          {isActiveCycle ? (
-            <>
-              <Button
-                title={HY.editCycle}
-                onPress={() => setCreateOpen(true)}
-              />
-              <Button
-                title={HY.removeCycle}
-                variant="outline"
-                onPress={() => setRemoveOpen(true)}
-              />
-              <Pressable
-                onPress={() =>
-                  router.replace(INRAppRoutes.patient(patientId ?? ""))
-                }
-                className="items-center py-2"
-              >
-                <Text className="text-[14px] text-calendar-primary">
-                  {HY.backToMain}
+            {nextTestDate ? (
+              <View className="mt-3 flex-row items-center gap-2">
+                <View className="h-2 w-2 rounded-full bg-calendar-danger" />
+                <Text className="text-[12px] text-grey-700">
+                  {HY.inrTestDay}
                 </Text>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Text className="text-center text-[13px] text-grey-900">
-                {HY.selectOrCreateCycle}
-              </Text>
-              <View className="flex-row gap-3">
-                <View className="flex-1">
-                  <Button
-                    title={HY.selectCycle}
-                    onPress={() =>
-                      router.push(
-                        INRAppRoutes.patientSavedCycles(
-                          patientId ?? "",
-                          selected,
-                        ),
-                      )
-                    }
-                  />
-                </View>
-                <View className="flex-1">
-                  <Button
-                    title={HY.createCycle}
-                    variant="outline"
-                    onPress={() => setCreateOpen(true)}
-                  />
-                </View>
               </View>
-            </>
-          )}
+            ) : null}
+          </ScrollView>
+
+          <View className="gap-2 pb-3 pt-2">
+            {isActiveCycle ? (
+              <>
+                <Button
+                  title={HY.editCycle}
+                  onPress={() => setCreateOpen(true)}
+                />
+                <Button
+                  title={HY.removeCycle}
+                  variant="outline"
+                  onPress={() => setRemoveOpen(true)}
+                />
+                <Pressable
+                  onPress={() =>
+                    router.replace(INRAppRoutes.patient(patientId ?? ""))
+                  }
+                  className="items-center py-2"
+                >
+                  <Text className="text-[14px] text-calendar-primary">
+                    {HY.backToMain}
+                  </Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text className="text-center text-[13px] text-grey-900">
+                  {HY.selectOrCreateCycle}
+                </Text>
+                <View className="flex-row gap-3">
+                  <View className="flex-1">
+                    <Button
+                      title={HY.selectCycle}
+                      onPress={() =>
+                        router.push(
+                          INRAppRoutes.patientSavedCycles(
+                            patientId ?? "",
+                            selected,
+                          ),
+                        )
+                      }
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Button
+                      title={HY.createCycle}
+                      variant="outline"
+                      onPress={() => setCreateOpen(true)}
+                    />
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
         </View>
       </View>
 

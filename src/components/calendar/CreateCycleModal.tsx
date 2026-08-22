@@ -6,9 +6,94 @@ import { HY } from "@/constants/hy";
 import type { SavedCycleDay } from "@/helpers/calendarItems";
 import dayjs, { type Dayjs } from "dayjs";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DEFAULT_DOSE = 2;
+const STEP = 0.25;
+
+function roundDose(value: number) {
+  return Math.max(0, Math.round(value * 100) / 100);
+}
+
+function formatDose(value: number) {
+  return String(value);
+}
+
+function CycleDoseField({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (next: number) => void;
+}) {
+  const [text, setText] = useState(formatDose(value));
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (!focused) setText(formatDose(value));
+  }, [focused, value]);
+
+  const applyText = (raw: string) => {
+    const cleaned = raw.replace(",", ".").replace(/[^\d.]/g, "");
+    const parts = cleaned.split(".");
+    const next =
+      parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : cleaned;
+    setText(next);
+    if (next === "" || next === ".") return;
+    const num = Number(next);
+    if (!Number.isNaN(num)) onChange(roundDose(num));
+  };
+
+  return (
+    <View className="flex-row items-center overflow-hidden rounded-[12px] border border-brand-200 bg-white">
+      <Pressable
+        onPress={() => onChange(roundDose(value - STEP))}
+        className="h-10 w-10 items-center justify-center bg-brand-50"
+        accessibilityLabel="−"
+      >
+        <Text className="text-[20px] text-calendar-primary">−</Text>
+      </Pressable>
+      <TextInput
+        value={focused ? text : formatDose(value)}
+        onChangeText={applyText}
+        onFocus={() => {
+          setFocused(true);
+          setText(formatDose(value));
+        }}
+        onBlur={() => {
+          setFocused(false);
+          const num = Number(text);
+          if (text === "" || text === "." || Number.isNaN(num)) {
+            setText(formatDose(value));
+            return;
+          }
+          onChange(roundDose(num));
+        }}
+        keyboardType="decimal-pad"
+        selectTextOnFocus
+        className="h-10 min-w-[52px] flex-1 px-1 text-center font-medium text-[15px] text-calendar-primary"
+      />
+      <Text className="pr-1 text-[12px] text-grey-400">{HY.mg}</Text>
+      <Pressable
+        onPress={() => onChange(roundDose(value + STEP))}
+        className="h-10 w-10 items-center justify-center bg-brand-50"
+        accessibilityLabel="+"
+      >
+        <Text className="text-[20px] text-calendar-primary">+</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 type CreateCycleModalProps = {
   visible: boolean;
@@ -47,6 +132,13 @@ export function CreateCycleModal({
   const [dragging, setDragging] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const daysBeforeDrag = useRef<SavedCycleDay[]>([]);
+  const insets = useSafeAreaInsets();
+
+  const setDayDose = (date: string, dosage: number) => {
+    setDays((current) =>
+      current.map((day) => (day.date === date ? { ...day, dosage } : day)),
+    );
+  };
 
   useEffect(() => {
     if (!visible) {
@@ -98,148 +190,147 @@ export function CreateCycleModal({
 
   return (
     <>
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View className="flex-1 justify-end bg-black/40">
-        <View className="max-h-[92%] rounded-t-[24px] bg-white px-4 pb-6 pt-3">
-          <View className="mb-3 items-center">
-            <View className="h-1 w-12 rounded-full bg-brand-200" />
-          </View>
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="font-semibold text-[18px] text-calendar-primary">
-              {HY.createDosageCycle}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              className="h-8 w-8 items-center justify-center rounded-lg bg-brand-100"
-            >
-              <Text className="text-[16px] text-calendar-primary">×</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={!dragging}
-            keyboardShouldPersistTaps="handled"
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={onClose}
+      >
+        <View className="flex-1 justify-end">
+          <Pressable
+            className="absolute inset-0 bg-black/40"
+            onPress={onClose}
+            accessibilityLabel={HY.cancel}
+          />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <MonthCalendarGrid
-              month={month}
-              marks={marks}
-              onPrev={() => onChangeMonth(month.subtract(1, "month"))}
-              onNext={() => onChangeMonth(month.add(1, "month"))}
-              onPressTitle={() => setMonthPickerOpen(true)}
-              onSelectDay={onSelectDay}
-              onSelectRange={onSelectRange}
-              onDragStateChange={(isDragging) => {
-                if (isDragging) daysBeforeDrag.current = days;
-                setDragging(isDragging);
-              }}
-            />
-
-            <View className="mt-3 flex-row gap-2 rounded-[12px] bg-brand-50 p-3">
-              <Text className="text-[14px] text-calendar-primary">i</Text>
-              <Text className="min-w-0 flex-1 text-[12px] leading-5 text-grey-900">
-                {days.length ? HY.defaultDoseHint : HY.selectDateRangeHint}
-              </Text>
-            </View>
-
-            {days.length ? (
-              <View className="mt-4">
-                <Text className="mb-3 font-medium text-[14px] text-grey-900">
-                  {HY.selectedRange} {rangeLabel}
+            <View
+              className="max-h-[92%] rounded-t-[24px] bg-white px-4 pt-3"
+              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+            >
+              <View className="mb-3 items-center">
+                <View className="h-1 w-12 rounded-full bg-brand-200" />
+              </View>
+              <View className="mb-3 flex-row items-center justify-between">
+                <Text className="font-semibold text-[18px] text-calendar-primary">
+                  {HY.createDosageCycle}
                 </Text>
-                {days.map((item, index) => {
-                  const parsed = dayjs(item.date);
-                  return (
-                    <View
-                      key={item.date}
-                      className="mb-2 flex-row items-center justify-between rounded-[12px] bg-brand-50 px-3 py-3"
-                    >
-                      <View className="min-w-0 flex-1 pr-3">
-                        <Text className="text-[14px] text-grey-900">
-                          {HY.weekdaysLong[parsed.day()]},{" "}
-                          {HY.months[parsed.month()]} {parsed.date()},{" "}
-                          {parsed.year()}
-                        </Text>
-                        <Text className="text-[12px] text-grey-400">
-                          {HY.dayN} {index + 1}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center gap-2">
-                        <Pressable
-                          onPress={() =>
-                            setDays((current) =>
-                              current.map((day) =>
-                                day.date === item.date
-                                  ? {
-                                      ...day,
-                                      dosage:
-                                        day.dosage >= 4
-                                          ? 0.5
-                                          : Math.round((day.dosage + 0.25) * 100) /
-                                            100,
-                                    }
-                                  : day,
-                              ),
-                            )
-                          }
-                          className="rounded-lg border border-brand-200 bg-white px-3 py-2"
+                <Pressable
+                  onPress={onClose}
+                  className="h-8 w-8 items-center justify-center rounded-lg bg-brand-100"
+                >
+                  <Text className="text-[16px] text-calendar-primary">×</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={!dragging}
+                keyboardShouldPersistTaps="handled"
+                automaticallyAdjustKeyboardInsets
+                style={{ flexGrow: 0, flexShrink: 1 }}
+              >
+                <MonthCalendarGrid
+                  month={month}
+                  marks={marks}
+                  onPrev={() => onChangeMonth(month.subtract(1, "month"))}
+                  onNext={() => onChangeMonth(month.add(1, "month"))}
+                  onPressTitle={() => setMonthPickerOpen(true)}
+                  onSelectDay={onSelectDay}
+                  onSelectRange={onSelectRange}
+                  onDragStateChange={(isDragging) => {
+                    if (isDragging) daysBeforeDrag.current = days;
+                    setDragging(isDragging);
+                  }}
+                />
+
+                <View className="mt-3 flex-row gap-2 rounded-[12px] bg-brand-50 p-3">
+                  <Text className="text-[14px] text-calendar-primary">i</Text>
+                  <Text className="min-w-0 flex-1 text-[12px] leading-5 text-grey-900">
+                    {days.length ? HY.defaultDoseHint : HY.selectDateRangeHint}
+                  </Text>
+                </View>
+
+                {days.length ? (
+                  <View className="mt-4">
+                    <Text className="mb-3 font-medium text-[14px] text-grey-900">
+                      {HY.selectedRange} {rangeLabel}
+                    </Text>
+                    {days.map((item, index) => {
+                      const parsed = dayjs(item.date);
+                      return (
+                        <View
+                          key={item.date}
+                          className="mb-2 rounded-[12px] bg-brand-50 px-3 py-3"
                         >
-                          <Text className="text-[14px] text-calendar-primary">
-                            {item.dosage.toFixed(2)}
-                            {HY.mg}
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          onPress={() =>
-                            setDays((current) =>
-                              current.filter((day) => day.date !== item.date),
-                            )
-                          }
-                          className="h-9 w-9 items-center justify-center rounded-lg bg-white"
-                        >
-                          <Text className="text-[18px] text-calendar-danger">
-                            ×
-                          </Text>
-                        </Pressable>
-                      </View>
+                          <View className="mb-2 flex-row items-start justify-between">
+                            <View className="min-w-0 flex-1 pr-3">
+                              <Text className="text-[14px] text-grey-900">
+                                {HY.weekdaysLong[parsed.day()]},{" "}
+                                {HY.months[parsed.month()]} {parsed.date()},{" "}
+                                {parsed.year()}
+                              </Text>
+                              <Text className="text-[12px] text-grey-400">
+                                {HY.dayN} {index + 1}
+                              </Text>
+                            </View>
+                            <Pressable
+                              onPress={() =>
+                                setDays((current) =>
+                                  current.filter(
+                                    (day) => day.date !== item.date,
+                                  ),
+                                )
+                              }
+                              className="h-9 w-9 items-center justify-center rounded-lg bg-white"
+                            >
+                              <Text className="text-[18px] text-calendar-danger">
+                                ×
+                              </Text>
+                            </Pressable>
+                          </View>
+                          <CycleDoseField
+                            value={item.dosage}
+                            onChange={(dosage) => setDayDose(item.date, dosage)}
+                          />
+                        </View>
+                      );
+                    })}
+                    <View className="mt-2">
+                      <Button
+                        title={HY.saveCycle}
+                        variant="outline"
+                        onPress={() => setNameOpen(true)}
+                      />
                     </View>
-                  );
-                })}
-                <View className="mt-2">
+                  </View>
+                ) : null}
+              </ScrollView>
+
+              <View
+                className="mt-3 flex-row items-center justify-between gap-3"
+                style={{ flexShrink: 0 }}
+              >
+                <Pressable onPress={onClose} className="px-2 py-3">
+                  <Text className="font-medium text-[14px] text-calendar-primary">
+                    {HY.cancel}
+                  </Text>
+                </Pressable>
+                <View className="min-w-[160px]">
                   <Button
-                    title={HY.saveCycle}
-                    variant="outline"
-                    onPress={() => setNameOpen(true)}
+                    title={HY.applyDosage}
+                    disabled={!days.length}
+                    loading={loading}
+                    onPress={() => onApply(days)}
                   />
                 </View>
               </View>
-            ) : null}
-          </ScrollView>
-
-          <View className="mt-4 flex-row items-center justify-between gap-3">
-            <Pressable onPress={onClose} className="px-2 py-3">
-              <Text className="font-medium text-[14px] text-calendar-primary">
-                {HY.cancel}
-              </Text>
-            </Pressable>
-            <View className="min-w-[160px]">
-              <Button
-                title={HY.applyDosage}
-                disabled={!days.length}
-                loading={loading}
-                onPress={() => onApply(days)}
-              />
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
-      </View>
-    </Modal>
+      </Modal>
 
       <MonthPickerSheet
         visible={monthPickerOpen}

@@ -13,22 +13,16 @@ export const INRAppRoutes = {
   patientNewInr: (patientId: string | number) =>
     `/patient/${patientId}/new-inr` as const,
   patientCalendar: (patientId: string | number, mode?: "dose" | "test") =>
-    mode
-      ? (`/patient/${patientId}/calendar?mode=${mode}` as const)
-      : (`/patient/${patientId}/calendar` as const),
+    `/patient/${patientId}/calendar?mode=${mode || "dose"}` as const,
   patientDailyNotesCalendar: (
     patientId: string | number,
     mode?: "dose" | "test",
   ) =>
-    mode
-      ? (`/patient/${patientId}/dailNnotesCalendar?mode=${mode}` as const)
-      : (`/patient/${patientId}/dailNnotesCalendar` as const),
+    `/patient/${patientId}/daily-notes-calendar?mode=${mode || "dose"}` as const,
   patientYearCalendar: (patientId: string | number) =>
     `/patient/${patientId}/year-calendar` as const,
   patientSavedCycles: (patientId: string | number, from?: string) =>
-    from
-      ? (`/patient/${patientId}/saved-cycles?from=${from}` as const)
-      : (`/patient/${patientId}/saved-cycles` as const),
+    `/patient/${patientId}/saved-cycles?from=${from || ""}` as const,
   patientAdvice: (patientId: string | number) =>
     `/patient/${patientId}/advice` as const,
   patientAdviceForm: (patientId: string | number) =>

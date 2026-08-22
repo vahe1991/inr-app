@@ -14,12 +14,12 @@ export type InrWarfarinDosageResponse = {
 };
 
 export type InrWarfarinDosageRequestType = {
-  id: number;
-  patient_id: string;
-  doctor_id: string;
+  id?: number;
+  patient_id: string | number;
+  doctor_id: string | number;
   date: string;
-  inr_result: number;
-  warfarine_dosage: number;
+  inr_result: number | string;
+  warfarine_dosage: number | string;
   next_test_give_date: string;
 };
 

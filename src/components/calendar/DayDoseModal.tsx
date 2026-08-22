@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { HY } from "@/constants/hy";
 import dayjs from "dayjs";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PRESET_DOSES = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
 const STEP = 0.25;
@@ -36,6 +37,7 @@ export function DayDoseModal({
 }: DayDoseModalProps) {
   const parsed = dayjs(date);
   const canSave = dose > 0 || isNextTest;
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal
@@ -51,7 +53,10 @@ export function DayDoseModal({
           onPress={onClose}
           accessibilityLabel={HY.cancel}
         />
-        <View className="max-h-[90%] rounded-t-[24px] bg-white px-4 pb-6 pt-3">
+        <View
+          className="max-h-[90%] rounded-t-[24px] bg-white px-4 pt-3"
+          style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+        >
           <View className="mb-3 items-center">
             <View className="h-1 w-12 rounded-full bg-brand-200" />
           </View>
@@ -74,7 +79,11 @@ export function DayDoseModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flexGrow: 0, flexShrink: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
             <View className="mb-3 rounded-[16px] border border-brand-100 p-3">
               <Text className="mb-3 font-semibold text-[14px] text-calendar-primary">
                 {HY.dailyWarfarinDose}
@@ -150,7 +159,7 @@ export function DayDoseModal({
             </View>
           </ScrollView>
 
-          <View className="flex-row gap-3 pt-3">
+          <View className="flex-row gap-3 pt-3" style={{ flexShrink: 0 }}>
             <View className="flex-1">
               <Button title={HY.cancel} variant="outline" onPress={onClose} />
             </View>

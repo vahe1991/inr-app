@@ -27,7 +27,8 @@ export const HY = {
   placeOfSubmission: "Հանձման վայրը",
   placePlaceholder: "օր․ ք․Երևան",
   scanDocument: "Սկանավորել փաստաթուղթը",
-  scanHint: "Ուղղեք տեսախցիկը թերթիկին՝ ամսաթիվը և INR-ը ավտոմատ լրացնելու համար",
+  scanHint:
+    "Ուղղեք տեսախցիկը թերթիկին՝ ամսաթիվը և INR-ը ավտոմատ լրացնելու համար",
   scanAiming: "Պահեք թերթիկը շրջանակի մեջ...",
   scanUseResult: "Օգտագործել",
   scanPermissionNeeded:
@@ -138,6 +139,7 @@ export const HY = {
   enterNote: "Մուտքագրել Նշում",
   adviceSingle: "Խորհուրդ",
   requiredDate: "Խնդրում ենք մուտքագրել ամսաթիվ",
+  dateNotBeforeToday: "Ամսաթիվը չի կարող լինել այսօրվանից առաջ",
   requiredInrValue: "Խնդրում ենք մուտքագրել INR արժեքը",
   requiredAdvice: "Խնդրում ենք մուտքագրել Խորհուրդ",
   requiredNote: "Խնդրում ենք մուտքագրել Նշում",
@@ -162,8 +164,8 @@ export const HY = {
   dailyDoseHint: "Ընտրեք ամսաթիվը օրական դեղաչափ նշանակելու համար",
   selectOrCreateCycle: "Ընտրեք կամ ստեղծեք դեղաչափի ցիկլ",
   selectCycle: "Ընտրել ցիկլ",
-  createCycle: "Ստեղծել ցիկլ",
-  createDosageCycle: "Ստեղծել դեղաչափի ցիկլ",
+  createCycle: "Ավելացնել",
+  createDosageCycle: "Ավելացնել դեղաչափ",
   savedCycles: "Պահպանված ցիկլեր",
   savedCyclesHint: "Ընտրեք պահպանված դեղաչափի ցիկլ արագ կիրառելու համար",
   noSavedCycles: "Պահպանված ցիկլեր չկան",
@@ -183,7 +185,7 @@ export const HY = {
   defaultDoseHint:
     "Բոլոր դեղաչափերը սկզբնապես սահմանված են 2.00 մգ: Կարգավորեք յուրաքանչյուր օրը՝ ըստ անհրաժեշտության:",
   selectedRange: "Ընտրված միջակայք՝",
-  saveCycle: "Պահպանել ցիկլը",
+  saveCycle: "Ստեղծել ցիկլ",
   applyDosage: "Կիրառել դեղաչափը",
   enterCycleName: "Մուտքագրեք ցիկլի անունը",
   cycleNamePlaceholder: "օր.՝ Հնգօրյա ցիկլ",

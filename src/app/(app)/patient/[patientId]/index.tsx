@@ -79,6 +79,7 @@ export default function PatientScreen() {
       </AuthenticatedScreen>
     );
   }
+  console.log(latestDosage, "latestDosage");
 
   return (
     <AuthenticatedScreen contentClassName="flex-1">
