@@ -77,7 +77,9 @@ export function PatientDashboard({
 
         <View className="flex-row gap-2">
           <Pressable
-            onPress={() => router.push(INRAppRoutes.patientCalendar(patientId))}
+            onPress={() =>
+              router.push(INRAppRoutes.patientDailyNotesCalendar(patientId, "dose"))
+            }
             className="flex-1 items-center justify-center  rounded-tl-[13px]  bg-brand-50 gap-[20px] px-3 py-5 active:opacity-80"
           >
             <Text className="text-center font-[600] text-[16px] text-grey-900">
@@ -90,7 +92,9 @@ export function PatientDashboard({
           </Pressable>
 
           <Pressable
-            onPress={() => router.push(INRAppRoutes.patientCalendar(patientId))}
+            onPress={() =>
+              router.push(INRAppRoutes.patientDailyNotesCalendar(patientId, "test"))
+            }
             className="flex-1 items-center justify-center  rounded-tr-[13px]  bg-brand-50 gap-[20px] px-3 py-5 active:opacity-80"
           >
             <Text className="text-center font-[600] text-[16px] text-grey-900">

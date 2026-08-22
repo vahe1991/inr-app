@@ -7,6 +7,9 @@ export default function PatientLayout() {
       <Stack.Screen name="history" />
       <Stack.Screen name="new-inr" />
       <Stack.Screen name="calendar" />
+      <Stack.Screen name="dailNnotesCalendar" />
+      <Stack.Screen name="year-calendar" />
+      <Stack.Screen name="saved-cycles" />
       <Stack.Screen name="advice" />
       <Stack.Screen name="advice-form" />
       <Stack.Screen name="complications" />

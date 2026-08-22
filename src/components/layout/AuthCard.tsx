@@ -53,7 +53,7 @@ export function AuthCard({ children, title, subtitle }: AuthCardProps) {
       >
         <View className="mb-10 items-center">
           <Image
-            source={require("../../../assets/images/splash-icon.png")}
+            source={require("../../../assets/images/ios-light.png")}
             className="h-[176px] w-[230px]"
             resizeMode="contain"
             accessibilityLabel="Նորք-Մարաշ բժշկական կենտրոն"
