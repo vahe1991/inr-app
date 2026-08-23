@@ -15,10 +15,10 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { useEffect, type ReactNode } from "react";
-import { Platform, StatusBar } from "react-native";
+import { Image, Platform, StatusBar, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
-void SystemUI.setBackgroundColorAsync("#ffffff");
+void SystemUI.setBackgroundColorAsync("#000000");
 
 function applyStatusBar() {
   StatusBar.setBarStyle("dark-content", true);
@@ -28,7 +28,22 @@ function applyStatusBar() {
   }
 }
 
-applyStatusBar();
+function BrandSplash() {
+  return (
+    <View className="flex-1 items-center justify-center bg-black">
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <Image
+        source={require("../../assets/images/splash-logo.png")}
+        className="h-[280px] w-[230px]"
+        resizeMode="contain"
+        accessibilityLabel="Նորք-Մարաշ բժշկական կենտրոն"
+        onLoad={() => {
+          void SplashScreen.hideAsync();
+        }}
+      />
+    </View>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,12 +95,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded) {
       applyStatusBar();
+      void SystemUI.setBackgroundColorAsync("#ffffff");
       void SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return null;
+    return <BrandSplash />;
   }
 
   return (

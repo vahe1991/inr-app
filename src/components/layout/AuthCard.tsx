@@ -9,7 +9,10 @@ import {
   View,
   type KeyboardEvent,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 type AuthCardProps = {
   children: ReactNode;
@@ -28,7 +31,9 @@ export function AuthCard({ children, title, subtitle }: AuthCardProps) {
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
     const onShow = (event: KeyboardEvent) => {
-      setKeyboardHeight(Math.max(event.endCoordinates.height - insets.bottom, 0));
+      setKeyboardHeight(
+        Math.max(event.endCoordinates.height - insets.bottom, 0),
+      );
     };
 
     const onHide = () => setKeyboardHeight(0);
@@ -53,7 +58,7 @@ export function AuthCard({ children, title, subtitle }: AuthCardProps) {
       >
         <View className="mb-10 items-center">
           <Image
-            source={require("../../../assets/images/splash-icon.png")}
+            source={require("../../../assets/images/brand-img.png")}
             className="h-[176px] w-[230px]"
             resizeMode="contain"
             accessibilityLabel="Նորք-Մարաշ բժշկական կենտրոն"

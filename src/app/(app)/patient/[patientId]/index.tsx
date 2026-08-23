@@ -4,13 +4,14 @@ import { ChatIcon } from "@/components/svg-components/chat-icon";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { asCalendarItems } from "@/helpers/calendarItems";
+import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
 import { useGetPatientInrNorm } from "@/hooks/inr-norm/useGetPatientInrNorm.hook";
 import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
-import { calendarApi } from "@/services/calendar.api";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 export default function PatientScreen() {
@@ -26,8 +27,12 @@ export default function PatientScreen() {
     page: "1",
     pageSize: "50",
   });
-  const [dailyDose, setDailyDose] = useState(0);
-  const [nextTestLabel, setNextTestLabel] = useState<string>(HY.notScheduled);
+  const { calendarDosages, isLoadingCalendarDosage } =
+    useGetInrWarfarinCalendarDosage({
+      patient_id: patientId ?? "",
+      page: 1,
+      pageSize: 100,
+    });
 
   const inrItems = useMemo(() => allInr?.items ?? [], [allInr]);
 
@@ -40,16 +45,25 @@ export default function PatientScreen() {
     );
   }, [inrItems]);
 
-  useEffect(() => {
-    if (!patientId) return;
-    const today = dayjs().format("YYYY-MM-DD");
-    void calendarApi.getRecord(today, patientId).then((record) => {
-      setDailyDose(record?.warfarinDoseMg ?? 0);
-      setNextTestLabel(record?.nextTestDate || HY.notScheduled);
-    });
-  }, [patientId]);
+  const calendarItems = useMemo(
+    () => asCalendarItems(calendarDosages),
+    [calendarDosages],
+  );
 
-  if (isLoading || normLoading || inrLoading) {
+  const latestDosage = useMemo(() => {
+    if (!calendarItems.length) return undefined;
+    const today = dayjs().format("YYYY-MM-DD");
+    return (
+      calendarItems.find(
+        (item) => dayjs(item.date).format("YYYY-MM-DD") === today,
+      ) ??
+      [...calendarItems].sort(
+        (a, b) => dayjs(b.date).valueOf() - dayjs(a.date).valueOf(),
+      )[0]
+    );
+  }, [calendarItems]);
+
+  if (isLoading || normLoading || inrLoading || isLoadingCalendarDosage) {
     return <LoadingScreen />;
   }
 
@@ -65,6 +79,7 @@ export default function PatientScreen() {
       </AuthenticatedScreen>
     );
   }
+  console.log(latestDosage, "latestDosage");
 
   return (
     <AuthenticatedScreen contentClassName="flex-1">
@@ -80,9 +95,8 @@ export default function PatientScreen() {
             normStart={inrNorm?.normStart}
             normEnd={inrNorm?.normEnd}
             currentInr={currentInr}
-            ttr={0}
-            dailyDose={dailyDose}
-            nextTestLabel={nextTestLabel}
+            dailyDose={latestDosage?.dosage ?? 0}
+            nextTestLabel={HY.notScheduled}
             onBack={() => router.back()}
           />
         </ScrollView>

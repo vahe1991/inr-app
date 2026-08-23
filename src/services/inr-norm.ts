@@ -169,4 +169,7 @@ export const inrNormApi = {
   }) {
     return await $axios.delete(`patients/${patient_id}/inr/${inrId}`);
   },
+  async fetchInrTTR(patientId: string) {
+    return (await $axios.get(`inr-ttr?patient_id=${patientId}`)).data;
+  },
 };

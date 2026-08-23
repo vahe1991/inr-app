@@ -20,7 +20,6 @@ type PatientDashboardProps = {
   normStart?: number | null;
   normEnd?: number | null;
   currentInr?: number | null;
-  ttr?: number | null;
   dailyDose?: number | string | null;
   nextTestLabel?: string | null;
   onBack: () => void;
@@ -32,7 +31,6 @@ export function PatientDashboard({
   normStart,
   normEnd,
   currentInr,
-  ttr,
   dailyDose = 0,
   nextTestLabel,
   onBack,
@@ -70,16 +68,18 @@ export function PatientDashboard({
 
       <View className="gap-2 px-4 pb-8">
         <InrScaleCard
+          patientId={patientId}
           normStart={normStart}
           normEnd={normEnd}
           currentInr={currentInr}
-          ttr={ttr}
           onEdit={() => router.push(INRAppRoutes.patientEditNorm(patientId))}
         />
 
         <View className="flex-row gap-2">
           <Pressable
-            onPress={() => router.push(INRAppRoutes.patientCalendar(patientId))}
+            onPress={() =>
+              router.push(INRAppRoutes.patientDailyNotesCalendar(patientId, "dose"))
+            }
             className="flex-1 items-center justify-center  rounded-tl-[13px]  bg-brand-50 gap-[20px] px-3 py-5 active:opacity-80"
           >
             <Text className="text-center font-[600] text-[16px] text-grey-900">
@@ -92,7 +92,9 @@ export function PatientDashboard({
           </Pressable>
 
           <Pressable
-            onPress={() => router.push(INRAppRoutes.patientCalendar(patientId))}
+            onPress={() =>
+              router.push(INRAppRoutes.patientDailyNotesCalendar(patientId, "test"))
+            }
             className="flex-1 items-center justify-center  rounded-tr-[13px]  bg-brand-50 gap-[20px] px-3 py-5 active:opacity-80"
           >
             <Text className="text-center font-[600] text-[16px] text-grey-900">
