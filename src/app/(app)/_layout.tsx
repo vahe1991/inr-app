@@ -1,9 +1,14 @@
 import { AppDrawerContent } from "@/components/layout/AppDrawerContent";
 import { HY } from "@/constants/hy";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications.hook";
 import { Drawer } from "expo-router/drawer";
 import { SymbolView } from "expo-symbols";
 
 export default function AppLayout() {
+  const { isAuthenticated } = useAuth();
+  usePushNotifications(isAuthenticated === true);
+
   return (
     <Drawer
       drawerContent={(props) => <AppDrawerContent {...props} />}
@@ -74,6 +79,13 @@ export default function AppLayout() {
               tintColor={color}
             />
           ),
+        }}
+      />
+      <Drawer.Screen
+        name="notifications"
+        options={{
+          drawerItemStyle: { display: "none" },
+          title: HY.notifications,
         }}
       />
       <Drawer.Screen

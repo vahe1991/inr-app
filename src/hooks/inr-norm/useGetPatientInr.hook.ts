@@ -5,7 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 export const useGetPatientInr = (params: {
   patient_id: string | number;
   date: string;
-}) => {
+}): {
+  inrPatentData: PatientInrType | undefined;
+  isLoading: boolean;
+  refetch: () => void;
+  isError: boolean;
+  isFetching: boolean;
+} => {
   const { data, isLoading, refetch, isError, isFetching } = useQuery<
     PatientInrResponse,
     Error,
@@ -13,7 +19,6 @@ export const useGetPatientInr = (params: {
   >({
     queryKey: ["patient-inr", params],
     queryFn: () => inrNormApi.getPatientInr(params),
-    staleTime: Infinity,
     enabled: !!params?.patient_id,
     select: (response) => response.data,
   });

@@ -14,6 +14,7 @@
         "tinted": "./assets/images/ios-tinted.png"
       },
       "bundleIdentifier": "com.xgalstyan.inrapp",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -27,7 +28,8 @@
         "monochromeImage": "./assets/images/android-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.xgalstyan.inrapp"
+      "package": "com.xgalstyan.inrapp",
+      "googleServicesFile": "./google-services.json"
     },
     "androidStatusBar": {
       "barStyle": "dark-content",
@@ -66,6 +68,13 @@
           "cameraPermission": "Թույլատրեք ֆոտոխցիկի օգտագործումը՝ վերլուծության թերթիկը սկանավորելու համար։",
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#5d4081",
+          "defaultChannel": "default"
         }
       ],
       [
