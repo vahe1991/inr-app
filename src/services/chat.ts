@@ -13,17 +13,23 @@ export const chatApi = {
 
   async sendChatsMessage({
     patient_id,
-    ...data
+    content,
+    file,
   }: {
     patient_id: string | number;
     content: string;
-    file?: File;
+    file?: { uri: string; name: string; type: string };
   }) {
-    return await $axios.post(`patients/${patient_id}/chat/messages`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const form = new FormData();
+    form.append("content", content);
+    if (file?.uri) {
+      form.append("file", {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      } as never);
+    }
+    return await $axios.post(`patients/${patient_id}/chat/messages`, form);
   },
   async readAsChat(patient_id: string | number) {
     return await $axios.post(`patients/${patient_id}/chat/read`);

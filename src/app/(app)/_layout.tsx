@@ -1,6 +1,7 @@
 import { AppDrawerContent } from "@/components/layout/AppDrawerContent";
 import { HY } from "@/constants/hy";
 import { useAuth } from "@/contexts/AuthContext";
+import { useChatSocket } from "@/hooks/chat/useChatSocket.hook";
 import { usePushNotifications } from "@/hooks/usePushNotifications.hook";
 import { Drawer } from "expo-router/drawer";
 import { SymbolView } from "expo-symbols";
@@ -8,6 +9,7 @@ import { SymbolView } from "expo-symbols";
 export default function AppLayout() {
   const { isAuthenticated } = useAuth();
   usePushNotifications(isAuthenticated === true);
+  useChatSocket(isAuthenticated === true);
 
   return (
     <Drawer
@@ -86,6 +88,13 @@ export default function AppLayout() {
         options={{
           drawerItemStyle: { display: "none" },
           title: HY.notifications,
+        }}
+      />
+      <Drawer.Screen
+        name="messages"
+        options={{
+          drawerItemStyle: { display: "none" },
+          title: HY.messages,
         }}
       />
       <Drawer.Screen

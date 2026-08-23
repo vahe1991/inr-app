@@ -11,6 +11,7 @@ export default function PatientLayout() {
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="chat" />
       <Stack.Screen name="history" />
       <Stack.Screen name="new-inr" />
       <Stack.Screen name="calendar" />
