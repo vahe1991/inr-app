@@ -1,5 +1,4 @@
-import { IconBadge } from "@/components/svg-components/icon-badge";
-import { RedHeardIcon } from "@/components/svg-components/red-heard-icon";
+import { WarningFillIcon } from "@/components/svg-components/warning-fill-icon";
 import { Button } from "@/components/ui/Button";
 import { ModalCard } from "@/components/ui/ModalCard";
 import { HY } from "@/constants/hy";
@@ -23,11 +22,7 @@ export function ConfirmModal({
   visible,
   title,
   description,
-  icon = (
-    <IconBadge>
-      <RedHeardIcon width={20} height={20} />
-    </IconBadge>
-  ),
+  icon = <WarningFillIcon />,
   confirmLabel = HY.confirm,
   cancelLabel = HY.cancel,
   destructive,

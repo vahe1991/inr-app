@@ -11,10 +11,10 @@ import { HY } from "@/constants/hy";
 import { useDeletePatientInr } from "@/hooks/inr-norm/useDeletePatientInr.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
 import { useGetPatientInr } from "@/hooks/inr-norm/useGetPatientInr.hook";
-import type { InrType } from "@/types/inr-types";
+import type { InrType, PatientInrType } from "@/types/inr-types";
 import dayjs from "dayjs";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -34,7 +34,13 @@ export default function PatientInrHistoryScreen() {
   );
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
-  const { inrPatentData } = useGetPatientInr({
+  const {
+    inrPatentData,
+    refetch: refetchPatientInr,
+  }: {
+    inrPatentData: PatientInrType | undefined;
+    refetch: () => void;
+  } = useGetPatientInr({
     patient_id: patientId ?? "",
     date: dayjs(new Date()).format("YYYY-MM-DD"),
   });
@@ -43,6 +49,13 @@ export default function PatientInrHistoryScreen() {
     page: "1",
     pageSize: "50",
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+      void refetchPatientInr();
+    }, [refetch, refetchPatientInr]),
+  );
   const {
     mutate: deletePatientInr,
     isPending: isDeletingPatientInr,

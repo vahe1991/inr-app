@@ -7,6 +7,7 @@ export const INRAppRoutes = {
   patients: () => "/(app)/patients" as const,
   investigations: () => "/(app)/investigations" as const,
   profile: () => "/(app)/profile" as const,
+  notifications: () => "/(app)/notifications" as const,
   patient: (patientId: string | number) => `/patient/${patientId}` as const,
   patientHistory: (patientId: string | number) =>
     `/patient/${patientId}/history` as const,
