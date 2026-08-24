@@ -4,14 +4,14 @@
     "slug": "inr-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/ios-icon.png",
+    "icon": "./assets/images/android-adaptive-foreground.png",
     "scheme": "inrapp",
     "userInterfaceStyle": "light",
     "ios": {
       "icon": {
-        "light": "./assets/images/ios-light.png",
-        "dark": "./assets/images/ios-dark.png",
-        "tinted": "./assets/images/ios-tinted.png"
+        "light": "./assets/images/android-adaptive-foreground.png",
+        "dark": "./assets/images/android-adaptive-foreground.png",
+        "tinted": "./assets/images/tabIcons/Favicon.png"
       },
       "bundleIdentifier": "com.xgalstyan.inrapp",
       "googleServicesFile": "./GoogleService-Info.plist",
@@ -20,12 +20,11 @@
       }
     },
     "android": {
-      "icon": "./assets/images/ios-icon.png",
+      "icon": "./assets/images/android-adaptive-foreground.png",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
-        "foregroundImage": "./assets/images/android-foreground.png",
-        "backgroundImage": "./assets/images/android-background.png",
-        "monochromeImage": "./assets/images/android-monochrome.png"
+        "foregroundImage": "./assets/images/android-adaptive-foreground.png",
+        "monochromeImage": "./assets/images/android-adaptive-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.xgalstyan.inrapp",
