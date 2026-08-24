@@ -45,6 +45,10 @@ export function asChatMessagePage(res: unknown): ChatMessagePageType {
 export function asChatMessage(value: unknown): ChatMessageType | null {
   const row = asRecord(value);
   if (!row) return null;
+  if (row.content == null && row.id == null) {
+    if (row.message) return asChatMessage(row.message);
+    if (row.data) return asChatMessage(row.data);
+  }
   const attachments = Array.isArray(row.attachments)
     ? row.attachments.map((item) => {
         const file = asRecord(item) ?? {};
@@ -57,13 +61,33 @@ export function asChatMessage(value: unknown): ChatMessageType | null {
         };
       })
     : [];
+  const sender = asRecord(row.sender);
 
   return {
     id: asString(row.id),
     patientId: asNumber(row.patientId ?? row.patient_id),
-    senderId: asString(row.senderId ?? row.sender_id),
-    senderName: asString(row.senderName ?? row.sender_name),
-    senderRole: asString(row.senderRole ?? row.sender_role),
+    senderId: asString(
+      row.senderId ??
+        row.sender_id ??
+        sender?.id ??
+        sender?.userId ??
+        sender?.user_id ??
+        row.userId ??
+        row.user_id,
+    ),
+    senderName: asString(
+      row.senderName ?? row.sender_name ?? sender?.name ?? sender?.fullName,
+    ),
+    senderRole: asString(row.senderRole ?? row.sender_role ?? sender?.role),
+    senderPhoto:
+      asString(
+        row.senderPhoto ??
+          row.sender_photo ??
+          sender?.photo ??
+          sender?.avatar ??
+          sender?.image,
+        "",
+      ) || null,
     type: asString(row.type, "text"),
     content: asString(row.content),
     attachments,
@@ -71,6 +95,19 @@ export function asChatMessage(value: unknown): ChatMessageType | null {
     createdAt: asString(row.createdAt ?? row.created_at),
     isRead: Boolean(row.isRead ?? row.is_read),
   };
+}
+
+export function asChatMessageFromResponse(value: unknown): ChatMessageType | null {
+  const direct = asChatMessage(value);
+  if (direct?.id || direct?.content) return direct;
+  const row = asRecord(value);
+  return (
+    asChatMessage(row?.data) ??
+    asChatMessage(row?.message) ??
+    asChatMessage(asRecord(row?.data)?.message) ??
+    asChatMessage(asRecord(row?.data)?.data) ??
+    direct
+  );
 }
 
 export function asChatInboxPage(res: unknown): ChatInboxPageType {

@@ -20,6 +20,7 @@ export const useGetChatMessages = (patient_id?: string | number) => {
     enabled,
     staleTime: 0,
     refetchOnMount: "always",
+    refetchOnReconnect: "always",
   });
 
   return {

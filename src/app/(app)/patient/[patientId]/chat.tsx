@@ -1,5 +1,7 @@
 import { ChatThread } from "@/components/chat/ChatThread";
+import { setChatViewing } from "@/services/chat-socket";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect } from "react";
 
 export default function PatientChatScreen() {
   const router = useRouter();
@@ -7,6 +9,13 @@ export default function PatientChatScreen() {
     patientId: string;
     name?: string;
   }>();
+
+  useEffect(() => {
+    const id = Number(patientId);
+    if (!Number.isFinite(id) || id <= 0) return;
+    setChatViewing(id);
+    return () => setChatViewing(null);
+  }, [patientId]);
 
   if (!patientId) return null;
 

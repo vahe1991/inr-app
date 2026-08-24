@@ -13,6 +13,7 @@ export interface ChatMessageType {
   senderId: string;
   senderName: string;
   senderRole: string;
+  senderPhoto?: string | null;
   type: string;
   content: string;
   attachments: Attachment[];

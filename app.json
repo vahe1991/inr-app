@@ -70,6 +70,15 @@
         }
       ],
       [
+        "expo-audio",
+        {
+          "microphonePermission": "Թույլատրեք միկրոֆոնի օգտագործումը՝ ձայնային նամակ ուղարկելու համար։",
+          "recordAudioAndroid": true,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#5d4081",
