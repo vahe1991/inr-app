@@ -4,6 +4,7 @@ import { ChatIcon } from "@/components/svg-components/chat-icon";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { INRAppRoutes } from "@/constants/routes.constants";
 import { asCalendarItems } from "@/helpers/calendarItems";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
@@ -12,7 +13,7 @@ import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function PatientScreen() {
   const router = useRouter();
@@ -100,7 +101,9 @@ export default function PatientScreen() {
           />
         </ScrollView>
         <Pressable
-          onPress={() => Alert.alert(HY.brand, HY.comingSoon)}
+          onPress={() =>
+            router.push(INRAppRoutes.patientChat(patientId, patient.fullName))
+          }
           className="absolute bottom-5 right-5 h-14 w-14 items-center justify-center rounded-full bg-calendar-primary shadow-lg active:opacity-90"
           accessibilityRole="button"
         >

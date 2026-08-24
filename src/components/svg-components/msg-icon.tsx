@@ -1,12 +1,19 @@
 import Svg, { Circle, Path, SvgProps } from "react-native-svg";
 export default function MsgIcon({
   isHaveMsg = false,
+  size = 44,
   ...props
-}: SvgProps & { isHaveMsg: boolean }) {
+}: SvgProps & { isHaveMsg?: boolean; size?: number }) {
   return (
     <>
       {isHaveMsg ? (
-        <Svg width={44} height={44} viewBox="0 0 44 44" fill="none" {...props}>
+        <Svg
+          width={size}
+          height={size}
+          viewBox="0 0 44 44"
+          fill="none"
+          {...props}
+        >
           <Path
             d="M30 18C27.79 18 26 16.21 26 14C26 11.79 27.79 10 30 10C32.21 10 34 11.79 34 14C34 16.21 32.21 18 30 18ZM22 25.42C22.77 25.42 23.54 25.13 24.12 24.54L28.79 19.87C26.06 19.31 24 16.89 24 13.99C24 13.65 24.04 13.32 24.09 12.99H15C13.19 12.99 11.62 13.96 10.74 15.4L19.88 24.55C20.46 25.13 21.23 25.43 22 25.43V25.42ZM31.76 19.73L25.53 25.96C24.56 26.93 23.27 27.42 21.99 27.42C20.71 27.42 19.43 26.93 18.45 25.96L10.05 17.54C10.04 17.69 10 17.84 10 18V29C10 31.76 12.24 34 15 34H29C31.76 34 34 31.76 34 29L33.98 18.47C33.34 19.04 32.59 19.47 31.76 19.73Z"
             fill="#502E7F"
@@ -14,7 +21,13 @@ export default function MsgIcon({
           <Circle cx={30} cy={14} r={4} fill="#AF0F1E" />
         </Svg>
       ) : (
-        <Svg width={44} height={44} viewBox="0 0 44 44" fill="none" {...props}>
+        <Svg
+          width={size}
+          height={size}
+          viewBox="0 0 44 44"
+          fill="none"
+          {...props}
+        >
           <Path
             d="M33.954 15.542L25.536 23.96C24.5974 24.8962 23.3257 25.422 22 25.422C20.6743 25.422 19.4026 24.8962 18.464 23.96L10.046 15.542C10.032 15.7 10 15.843 10 16V28C10.0016 29.3256 10.5289 30.5964 11.4662 31.5338C12.4036 32.4711 13.6744 32.9984 15 33H29C30.3256 32.9984 31.5964 32.4711 32.5338 31.5338C33.4711 30.5964 33.9984 29.3256 34 28V16C34 15.843 33.968 15.7 33.954 15.542Z"
             fill="#6A4A98"

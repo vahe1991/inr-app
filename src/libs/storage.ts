@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const KEYS = {
   token: "token",
+  userId: "userId",
   name: "name",
   email: "email",
   permissions: "permissions",
@@ -26,6 +27,13 @@ export const storage = {
   },
   async getName() {
     return AsyncStorage.getItem(KEYS.name);
+  },
+  async getUserId() {
+    const id = await AsyncStorage.getItem(KEYS.userId);
+    return id?.trim() ? id : null;
+  },
+  async setUserId(userId: string) {
+    await AsyncStorage.setItem(KEYS.userId, userId);
   },
   async getRememberCredentials(): Promise<RememberedCredentials | null> {
     const [email, password] = await Promise.all([
@@ -63,12 +71,14 @@ export const storage = {
   },
   async setSession(data: {
     token: string;
+    userId?: string | number | null;
     name?: string;
     email?: string;
     permissions?: unknown;
   }) {
     await AsyncStorage.multiSet([
       [KEYS.token, data.token],
+      [KEYS.userId, data.userId != null ? String(data.userId) : ""],
       [KEYS.name, data.name ?? ""],
       [KEYS.email, data.email ?? ""],
       [KEYS.permissions, JSON.stringify(data.permissions ?? {})],
@@ -77,6 +87,7 @@ export const storage = {
   async clear() {
     await AsyncStorage.multiRemove([
       KEYS.token,
+      KEYS.userId,
       KEYS.name,
       KEYS.email,
       KEYS.permissions,

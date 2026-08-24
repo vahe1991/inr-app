@@ -3,6 +3,7 @@ import MsgIcon from "@/components/svg-components/msg-icon";
 import NotificationIcon from "@/components/svg-components/notification-icon";
 import { HY } from "@/constants/hy";
 import { INRAppRoutes } from "@/constants/routes.constants";
+import { useGetChatUnreadCount } from "@/hooks/chat/useGetChatUnreadCount.hook";
 import { useGetUnreadCount } from "@/hooks/notification/useGetUnreadCount.hook";
 import { useFocusEffect, useNavigation, usePathname, useRouter } from "expo-router";
 import { useCallback, type ReactNode } from "react";
@@ -41,12 +42,16 @@ export function AppHeader({
   const router = useRouter();
   const pathname = usePathname();
   const { unreadCount, refetch } = useGetUnreadCount();
+  const { unreadCount: chatUnread, refetch: refetchChatUnread } =
+    useGetChatUnreadCount();
   const onNotifications = pathname.includes("/notifications");
+  const onMessages = pathname.includes("/messages");
 
   useFocusEffect(
     useCallback(() => {
       void refetch();
-    }, [refetch]),
+      void refetchChatUnread();
+    }, [refetch, refetchChatUnread]),
   );
 
   return (
@@ -74,7 +79,18 @@ export function AppHeader({
         >
           <NotificationIcon isUnreadNotifications={unreadCount > 0} />
         </Pressable>
-        <MsgIcon isHaveMsg={true} />
+        <Pressable
+          onPress={() => {
+            if (onMessages) return;
+            router.push(INRAppRoutes.messages());
+          }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={HY.messages}
+          className="items-center justify-center"
+        >
+          <MsgIcon isHaveMsg={chatUnread > 0} />
+        </Pressable>
         {showMenu ? (
           <Pressable
             onPress={() => openNearestDrawer(navigation)}

@@ -33,7 +33,13 @@ export function PatientAvatar({
       : kind === "male"
         ? "bg-blue-50"
         : "bg-brand-50";
-  const avatar = kind === "female" ? <FemaleAvatar /> : <MaleAvatar />;
+  const iconSize = Math.round(size * 0.72);
+  const avatar =
+    kind === "female" ? (
+      <FemaleAvatar size={iconSize} />
+    ) : (
+      <MaleAvatar size={iconSize} />
+    );
 
   return (
     <View

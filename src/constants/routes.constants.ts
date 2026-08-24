@@ -8,7 +8,12 @@ export const INRAppRoutes = {
   investigations: () => "/(app)/investigations" as const,
   profile: () => "/(app)/profile" as const,
   notifications: () => "/(app)/notifications" as const,
+  messages: () => "/(app)/messages" as const,
   patient: (patientId: string | number) => `/patient/${patientId}` as const,
+  patientChat: (patientId: string | number, name?: string) =>
+    name
+      ? (`/patient/${patientId}/chat?name=${encodeURIComponent(name)}` as const)
+      : (`/patient/${patientId}/chat` as const),
   patientHistory: (patientId: string | number) =>
     `/patient/${patientId}/history` as const,
   patientNewInr: (patientId: string | number) =>
