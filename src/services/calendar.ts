@@ -42,11 +42,9 @@ export const calendarApi = {
     ...data
   }: {
     patientId: string;
-    data: {
-      id?: number;
-      date: string;
-      dosage: number;
-    };
+    id?: number;
+    date: string;
+    dosage: number;
   }) {
     return (
       await $axios.post(`patients/${patientId}/inr-warfarin-calendar`, data)

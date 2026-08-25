@@ -162,11 +162,9 @@ export default function PatientCalendarScreen() {
       if (dose > 0) {
         await mutateCalendar({
           patientId,
-          data: {
-            ...(existing ? { id: existing.id } : {}),
-            date: selected,
-            dosage: dose,
-          },
+          ...(existing ? { id: existing.id } : {}),
+          date: selected,
+          dosage: dose,
         });
       }
 
@@ -197,11 +195,9 @@ export default function PatientCalendarScreen() {
         const existing = recordByDate.get(day.date);
         await mutateCalendar({
           patientId,
-          data: {
-            ...(existing ? { id: existing.id } : {}),
-            date: day.date,
-            dosage: day.dosage,
-          },
+          ...(existing ? { id: existing.id } : {}),
+          date: day.date,
+          dosage: day.dosage,
         });
       }
       setAppliedDays(days);

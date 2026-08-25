@@ -34,7 +34,6 @@ export default function PatientScreen() {
       page: 1,
       pageSize: 100,
     });
-
   const inrItems = useMemo(() => allInr?.items ?? [], [allInr]);
 
   const currentInr = useMemo(() => {

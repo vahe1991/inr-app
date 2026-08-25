@@ -32,7 +32,7 @@ export function Button({
   const textVariants = {
     primary: "font-semibold text-white",
     outline: "font-semibold text-calendar-primary",
-    ghost: "font-medium text-auth-link",
+    ghost: "font-[700] text-auth-link",
     destructive: "font-semibold text-white",
   };
 

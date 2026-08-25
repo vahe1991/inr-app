@@ -41,8 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = await storage.getToken();
     const storedEmail = await storage.getEmail();
     const storedName = await storage.getName();
-    const storedUserId =
-      (await storage.getUserId()) || userIdFromToken(token);
+    const storedUserId = (await storage.getUserId()) || userIdFromToken(token);
     setIsAuthenticated(Boolean(token));
     setUserIdState(storedUserId);
     setEmail(storedEmail);
@@ -96,7 +95,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshAuth,
       setUserId,
     }),
-    [isAuthenticated, userId, email, name, logIn, logOut, refreshAuth, setUserId],
+    [
+      isAuthenticated,
+      userId,
+      email,
+      name,
+      logIn,
+      logOut,
+      refreshAuth,
+      setUserId,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

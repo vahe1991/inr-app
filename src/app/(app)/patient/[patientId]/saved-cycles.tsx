@@ -45,10 +45,8 @@ export default function SavedCyclesScreen() {
       for (let index = 0; index < cycle.days.length; index += 1) {
         await mutateAsync({
           patientId,
-          data: {
-            date: dayjs(startDate).add(index, "day").format("YYYY-MM-DD"),
-            dosage: cycle.days[index].dosage,
-          },
+          date: dayjs(startDate).add(index, "day").format("YYYY-MM-DD"),
+          dosage: cycle.days[index].dosage,
         });
       }
       router.back();
@@ -61,10 +59,7 @@ export default function SavedCyclesScreen() {
 
   return (
     <AuthenticatedScreen contentClassName="flex-1">
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="px-4 pb-8 pt-3"
-      >
+      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-3">
         <PatientSubHeader
           title={HY.savedCycles}
           description={HY.savedCyclesHint}
