@@ -95,7 +95,13 @@ export default function PatientScreen() {
             normEnd={inrNorm?.normEnd}
             currentInr={currentInr}
             dailyDose={latestDosage?.dosage ?? 0}
-            nextTestLabel={HY.notScheduled}
+            nextTestLabel={
+              calendarDosages?.nextTestGiveDate
+                ? dayjs(calendarDosages.nextTestGiveDate?.date).format(
+                    "DD.MM.YYYY",
+                  )
+                : HY.notScheduled
+            }
             onBack={() => router.back()}
           />
         </ScrollView>

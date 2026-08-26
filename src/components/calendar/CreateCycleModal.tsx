@@ -309,14 +309,13 @@ export function CreateCycleModal({
                 ) : null}
                 <View className="flex-row items-center justify-end gap-3">
                   <Button
-                    className="w-[120px]"
+                    fullWidth={false}
                     title={HY.cancel}
                     variant="ghost"
                     onPress={onClose}
                   />
-
                   <Button
-                    className="w-[200px]"
+                    fullWidth={false}
                     title={HY.applyDosage}
                     disabled={!days.length}
                     loading={loading}
@@ -354,7 +353,7 @@ export function CreateCycleModal({
               {HY.enterCycleName}
             </Text>
             <TextField
-              placeholder={HY.cycleNamePlaceholder}
+              placeholder={HY.saveCycle}
               value={name}
               onChangeText={setName}
             />

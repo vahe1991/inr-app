@@ -10,6 +10,7 @@ type ButtonProps = {
   /** Pass a render function to paint the icon with the current content color. */
   icon?: ReactNode | ((color: string) => ReactNode);
   className?: string;
+  fullWidth?: boolean;
 };
 
 export function Button({
@@ -20,9 +21,11 @@ export function Button({
   variant = "primary",
   icon,
   className = "",
+  fullWidth = true,
 }: ButtonProps) {
-  const base =
-    "h-12 w-full items-center justify-center rounded-lg px-4 active:opacity-80";
+  const base = `h-12 items-center justify-center rounded-lg px-4 active:opacity-80 ${
+    fullWidth ? "w-full" : "self-start"
+  }`;
   const variants = {
     primary: "bg-calendar-primary",
     outline: "border border-brand-200 bg-brand-10",

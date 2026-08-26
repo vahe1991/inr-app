@@ -311,19 +311,16 @@ export function MonthCalendarGrid({
                       {mark.dosage}
                       {HY.mg}
                     </Text>
-                  ) : mark?.dot ? (
-                    <View
-                      className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
-                        mark.dot === "red"
-                          ? "bg-calendar-danger"
-                          : "bg-calendar-primary"
-                      }`}
-                    />
-                  ) : !compact && active ? (
+                  ) : null}
+                  {mark?.dot === "red" ? (
+                    <View className="mt-0.5 h-[7px] w-[7px] rounded-full bg-red-700" />
+                  ) : !compact && mark?.dosage == null && mark?.dot === "purple" ? (
                     <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-calendar-primary" />
-                  ) : (
+                  ) : !compact && mark?.dosage == null && active ? (
+                    <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-calendar-primary" />
+                  ) : mark?.dosage == null ? (
                     <View className="mt-0.5 h-1.5 w-1.5" />
-                  )}
+                  ) : null}
                 </View>
               ) : (
                 <View className={compact ? "h-5" : "h-6"} />

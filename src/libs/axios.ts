@@ -38,6 +38,7 @@ $axios.interceptors.response.use(
     const shouldLogout =
       url !== "login" &&
       (status === 401 ||
+        data?.message?.includes("unauthorized") ||
         data?.message?.includes("Unauthenticated.") ||
         data?.message?.includes("invalid token."));
 

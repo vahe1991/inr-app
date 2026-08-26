@@ -40,7 +40,7 @@ export type SavedCycle = {
 function asCycleDays(value: unknown): SavedCycleDay[] {
   if (!Array.isArray(value)) return [];
   return value
-    .map((item) => {
+    .map((item): SavedCycleDay | null => {
       if (!item || typeof item !== "object") return null;
       const row = item as Record<string, unknown>;
       const date = String(row.date ?? "");
@@ -49,7 +49,7 @@ function asCycleDays(value: unknown): SavedCycleDay[] {
       return {
         date,
         dosage,
-        id: typeof row.id === "number" ? row.id : undefined,
+        ...(typeof row.id === "number" ? { id: row.id } : {}),
       };
     })
     .filter((item): item is SavedCycleDay => item != null);
@@ -61,15 +61,16 @@ function asCycle(value: unknown): SavedCycle | null {
   const days = asCycleDays(row.days);
   const name = String(row.name ?? "");
   if (!name && !days.length) return null;
+  const createdAt = row.created_at
+    ? String(row.created_at)
+    : row.createdAt
+      ? String(row.createdAt)
+      : undefined;
   return {
-    id: typeof row.id === "number" ? row.id : undefined,
     name: name || String(days.length),
     days,
-    createdAt: row.created_at
-      ? String(row.created_at)
-      : row.createdAt
-        ? String(row.createdAt)
-        : undefined,
+    ...(typeof row.id === "number" ? { id: row.id } : {}),
+    ...(createdAt ? { createdAt } : {}),
   };
 }
 

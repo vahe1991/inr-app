@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { HY } from "@/constants/hy";
 import { INRAppRoutes } from "@/constants/routes.constants";
+import { useAuth } from "@/contexts/AuthContext";
 import { asCalendarItems, type SavedCycleDay } from "@/helpers/calendarItems";
 import { useDeleteWarfarinCalendarDosage } from "@/hooks/calendar/useDeleteWarfarinCalendarDosage.hook";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
@@ -54,6 +55,7 @@ export default function PatientCalendarScreen() {
   const [appliedDays, setAppliedDays] = useState<SavedCycleDay[]>([]);
   const [removeOpen, setRemoveOpen] = useState(false);
 
+  const { userId } = useAuth();
   const { patient } = usePatientById(patientId);
   const { calendarDosages, refetch } = useGetInrWarfarinCalendarDosage({
     patient_id: patientId ?? "",
@@ -106,6 +108,17 @@ export default function PatientCalendarScreen() {
     return map;
   }, [calendarItems]);
 
+  const nextTestDates = useMemo(() => {
+    const dates = new Set<string>();
+    (calendarDosages?.nextTestGiveDates ?? []).forEach((item) => {
+      const raw = item.date || item.visitDate;
+      if (!raw) return;
+      dates.add(dayjs(raw).format("YYYY-MM-DD"));
+    });
+    if (nextTestDate) dates.add(nextTestDate);
+    return dates;
+  }, [calendarDosages?.nextTestGiveDates, nextTestDate]);
+
   const marks = useMemo(() => {
     const next: Record<string, DayMark> = {};
     calendarItems.forEach((item) => {
@@ -119,11 +132,11 @@ export default function PatientCalendarScreen() {
         rangeEdge: index === 0 || index === list.length - 1,
       };
     });
-    if (nextTestDate) {
-      next[nextTestDate] = { ...next[nextTestDate], dot: "red" };
-    }
+    nextTestDates.forEach((key) => {
+      next[key] = { ...next[key], dot: "red" };
+    });
     return next;
-  }, [appliedDays, calendarItems, nextTestDate]);
+  }, [appliedDays, calendarItems, nextTestDates]);
 
   const title =
     mode === "test"
@@ -147,7 +160,7 @@ export default function PatientCalendarScreen() {
         appliedDays.find((item) => item.date === date)?.dosage ??
         2,
     );
-    setIsNextTest(mode === "test" || nextTestDate === date);
+    setIsNextTest(mode === "test" || nextTestDates.has(date));
     setDayOpen(true);
   };
 
@@ -209,13 +222,13 @@ export default function PatientCalendarScreen() {
   };
 
   const saveNamedCycle = async (name: string, days: SavedCycleDay[]) => {
-    if (!patientId || !patient?.doctorId) {
+    if (!patientId || !userId) {
       Alert.alert(HY.error, HY.patientNotFound);
       return;
     }
     try {
       await mutateCycle({
-        doctor_id: Number(patient.doctorId),
+        doctor_id: Number(userId),
         patient_id: Number(patientId),
         name,
         days: days.map((day) => ({ date: day.date, dosage: day.dosage })),
@@ -287,10 +300,10 @@ export default function PatientCalendarScreen() {
               onSelectDay={openDay}
             />
 
-            {nextTestDate ? (
-              <View className="mt-3 flex-row items-center gap-2">
-                <View className="h-2 w-2 rounded-full bg-calendar-danger" />
-                <Text className="text-[12px] text-grey-700">
+            {nextTestDates.size ? (
+              <View className="mt-3 flex-row items-center justify-center gap-2">
+                <View className="h-[7px] w-[7px] rounded-full bg-red-700" />
+                <Text className="text-[12px] font-[600] text-brand-600">
                   {HY.inrTestDay}
                 </Text>
               </View>

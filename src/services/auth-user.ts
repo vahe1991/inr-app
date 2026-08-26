@@ -16,7 +16,9 @@ export const login = async (user: LoginPayload): Promise<LoginResponse> => {
 };
 
 export const logout = async (): Promise<LogoutResponse> => {
-  return await $axios.post("logout");
+  const { data } = await $axios.post<LogoutResponse>("logout");
+  delete $axios.defaults.headers.common.Authorization;
+  return data;
 };
 
 export const createUser = async (user: Record<string, unknown>) => {

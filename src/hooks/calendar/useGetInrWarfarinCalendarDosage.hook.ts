@@ -1,6 +1,5 @@
 import { calendarApi } from "@/services/calendar";
-import { InrWarfarinCalendarResponse } from "@/types/calendar-types.js";
-
+import type { InrWarfarinCalendarResponse } from "@/types/calendar-types";
 import { useQuery } from "@tanstack/react-query";
 
 export const useGetInrWarfarinCalendarDosage = (params: {
@@ -17,7 +16,7 @@ export const useGetInrWarfarinCalendarDosage = (params: {
   });
 
   return {
-    calendarDosages: data ?? [],
+    calendarDosages: data,
     isLoadingCalendarDosage: isLoading,
     refetch,
     isError,

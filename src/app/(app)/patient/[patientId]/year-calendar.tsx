@@ -30,10 +30,17 @@ export default function YearCalendarScreen() {
   );
 
   const marks = useMemo(() => {
-    const next: Record<string, { dot?: "purple"; dosage?: number }> = {};
+    const next: Record<string, { dot?: "purple" | "red"; dosage?: number }> =
+      {};
     asCalendarItems(calendarDosages).forEach((item) => {
       const key = dayjs(item.date).format("YYYY-MM-DD");
       next[key] = { dot: "purple", dosage: item.dosage };
+    });
+    (calendarDosages?.nextTestGiveDates ?? []).forEach((item) => {
+      const raw = item.date || item.visitDate;
+      if (!raw) return;
+      const key = dayjs(raw).format("YYYY-MM-DD");
+      next[key] = { ...next[key], dot: "red" };
     });
     return next;
   }, [calendarDosages]);
