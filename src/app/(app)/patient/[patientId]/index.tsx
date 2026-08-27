@@ -1,15 +1,20 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientDashboard } from "@/components/patient/PatientDashboard";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { ChatIcon } from "@/components/svg-components/chat-icon";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
+import { useAuth } from "@/contexts/AuthContext";
+import { shouldOpenOwnPatient } from "@/helpers/permissions";
 import { asCalendarItems } from "@/helpers/calendarItems";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
 import { useGetPatientInrNorm } from "@/hooks/inr-norm/useGetPatientInrNorm.hook";
 import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
@@ -17,6 +22,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function PatientScreen() {
   const router = useRouter();
+  const { user, permissions } = useAuth();
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
   const { patient, isLoading } = usePatientById(patientId);
   const { inrNorm, isLoading: normLoading } = useGetPatientInrNorm({
@@ -34,6 +40,8 @@ export default function PatientScreen() {
       page: 1,
       pageSize: 100,
     });
+  const canChat = useCan("GET", ApiPaths.patientChatMessages(patientId ?? "{patientId}"));
+  const hideBack = shouldOpenOwnPatient(permissions, user);
   const inrItems = useMemo(() => allInr?.items ?? [], [allInr]);
 
   const currentInr = useMemo(() => {
@@ -63,58 +71,62 @@ export default function PatientScreen() {
     );
   }, [calendarItems]);
 
-  if (isLoading || normLoading || inrLoading || isLoadingCalendarDosage) {
-    return <LoadingScreen />;
-  }
-
-  if (!patient || !patientId) {
-    return (
-      <AuthenticatedScreen>
-        <View className="flex-1 items-center justify-center px-4">
-          <Text className="mb-4 text-sm text-calendar-danger">
-            Պացիենտը չի գտնվել
-          </Text>
-          <Button title="Վերադառնալ" onPress={() => router.back()} />
-        </View>
-      </AuthenticatedScreen>
-    );
-  }
-
   return (
-    <AuthenticatedScreen contentClassName="flex-1">
-      <View className="flex-1">
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerClassName="pb-24"
-        >
-          <PatientDashboard
-            patient={patient}
-            patientId={patientId}
-            normStart={inrNorm?.normStart}
-            normEnd={inrNorm?.normEnd}
-            currentInr={currentInr}
-            dailyDose={latestDosage?.dosage ?? 0}
-            nextTestLabel={
-              calendarDosages?.nextTestGiveDate
-                ? dayjs(calendarDosages.nextTestGiveDate?.date).format(
-                    "DD.MM.YYYY",
+    <PermissionGate method="GET" path={ApiPaths.patient(patientId ?? "{id}")}>
+      {isLoading || normLoading || inrLoading || isLoadingCalendarDosage ? (
+        <LoadingScreen />
+      ) : !patient || !patientId ? (
+        <AuthenticatedScreen>
+          <View className="flex-1 items-center justify-center px-4">
+            <Text className="mb-4 text-sm text-calendar-danger">
+              Պացիենտը չի գտնվել
+            </Text>
+            {hideBack ? null : (
+              <Button title="Վերադառնալ" onPress={() => router.back()} />
+            )}
+          </View>
+        </AuthenticatedScreen>
+      ) : (
+        <AuthenticatedScreen contentClassName="flex-1">
+          <View className="flex-1">
+            <ScrollView
+              className="flex-1"
+              showsVerticalScrollIndicator={false}
+              contentContainerClassName="pb-24"
+            >
+              <PatientDashboard
+                patient={patient}
+                patientId={patientId}
+                normStart={inrNorm?.normStart}
+                normEnd={inrNorm?.normEnd}
+                currentInr={currentInr}
+                dailyDose={latestDosage?.dosage ?? 0}
+                nextTestLabel={
+                  calendarDosages?.nextTestGiveDate
+                    ? dayjs(calendarDosages.nextTestGiveDate?.date).format(
+                        "DD.MM.YYYY",
+                      )
+                    : HY.notScheduled
+                }
+                onBack={hideBack ? undefined : () => router.back()}
+              />
+            </ScrollView>
+            {canChat ? (
+              <Pressable
+                onPress={() =>
+                  router.push(
+                    INRAppRoutes.patientChat(patientId, patient.fullName),
                   )
-                : HY.notScheduled
-            }
-            onBack={() => router.back()}
-          />
-        </ScrollView>
-        <Pressable
-          onPress={() =>
-            router.push(INRAppRoutes.patientChat(patientId, patient.fullName))
-          }
-          className="absolute bottom-5 right-5 h-14 w-14 items-center justify-center rounded-full bg-calendar-primary shadow-lg active:opacity-90"
-          accessibilityRole="button"
-        >
-          <ChatIcon />
-        </Pressable>
-      </View>
-    </AuthenticatedScreen>
+                }
+                className="absolute bottom-5 right-5 h-14 w-14 items-center justify-center rounded-full bg-calendar-primary shadow-lg active:opacity-90"
+                accessibilityRole="button"
+              >
+                <ChatIcon />
+              </Pressable>
+            ) : null}
+          </View>
+        </AuthenticatedScreen>
+      )}
+    </PermissionGate>
   );
 }

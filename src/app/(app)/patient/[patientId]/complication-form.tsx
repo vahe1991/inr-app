@@ -1,5 +1,6 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { CheckmarkIcon } from "@/components/svg-components/checkmark-icon";
 import { ComplexityBtnIcon } from "@/components/svg-components/complexity-icon";
 import { SuccessIcon } from "@/components/svg-components/success-icon";
@@ -10,6 +11,7 @@ import { FormSelectField } from "@/components/ui/FormSelectField";
 import { FormTextField } from "@/components/ui/FormTextField";
 import { SuccessModal } from "@/components/ui/SuccessModal";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { useCreateOrUpdateInrComplication } from "@/hooks/inr-norm/useCreateOrUpdateInrComplication.hook";
 import type { InrComplicationType } from "@/types/patient-types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -226,6 +228,10 @@ export default function ComplicationFormScreen() {
     ) : null;
 
   return (
+    <PermissionGate
+      method="POST"
+      path={ApiPaths.patientInrComplication(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <KeyboardAvoidingView
         className="flex-1"
@@ -315,5 +321,6 @@ export default function ComplicationFormScreen() {
         }}
       />
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

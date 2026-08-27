@@ -1,10 +1,13 @@
 import { PatientAvatar } from "@/components/patient/PatientAvatar";
+import { Permission } from "@/components/permission/Permission";
 import { ArrowLeftIcon } from "@/components/svg-components/arrow-left-icon";
 import { ConfirmIcon } from "@/components/svg-components/confirm-icon";
 import { IconBadge } from "@/components/svg-components/icon-badge";
 import MsgIcon from "@/components/svg-components/msg-icon";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
+import { useCan } from "@/hooks/usePermission.hook";
 import { formatChatTime } from "@/helpers/chatUi";
 import { useGetChatNotifications } from "@/hooks/chat/useGetChatNotifications.hook";
 import { useGetChatUnreadCount } from "@/hooks/chat/useGetChatUnreadCount.hook";
@@ -17,6 +20,9 @@ import { FlatList, ImageBackground, Pressable, Text, View } from "react-native";
 
 export function ChatInboxPanel() {
   const router = useRouter();
+  const canReadChat = useCan("POST", ApiPaths.patientChatRead());
+  const canInbox = useCan("GET", ApiPaths.chatNotifications);
+  const canChatCount = useCan("GET", ApiPaths.chatUnreadCount);
   const {
     items,
     totalCount,
@@ -33,13 +39,13 @@ export function ChatInboxPanel() {
 
   useFocusEffect(
     useCallback(() => {
-      void refetch();
-      void refetchUnread();
-    }, [refetch, refetchUnread]),
+      if (canInbox) void refetch();
+      if (canChatCount) void refetchUnread();
+    }, [canChatCount, canInbox, refetch, refetchUnread]),
   );
 
   const onPressItem = (item: ChatInboxItemType) => {
-    if (item.unreadCount > 0 || !item.isRead) {
+    if (canReadChat && (item.unreadCount > 0 || !item.isRead)) {
       readChat.mutate(item.patientId);
     }
     router.push(
@@ -84,15 +90,17 @@ export function ChatInboxPanel() {
             {HY.messages} {count}
           </Text>
 
-          <Pressable
-            onPress={() => readAll.mutate()}
-            disabled={readAll.isPending || unreadCount < 1}
-            className="ml-[auto]"
-          >
-            <IconBadge>
-              <ConfirmIcon />
-            </IconBadge>
-          </Pressable>
+          <Permission method="POST" path={ApiPaths.chatNotificationsReadAll}>
+            <Pressable
+              onPress={() => readAll.mutate()}
+              disabled={readAll.isPending || unreadCount < 1}
+              className="ml-[auto]"
+            >
+              <IconBadge>
+                <ConfirmIcon />
+              </IconBadge>
+            </Pressable>
+          </Permission>
         </View>
       </View>
       <View className="mx-4 mt-2 mb-3 h-px bg-brand-200" />

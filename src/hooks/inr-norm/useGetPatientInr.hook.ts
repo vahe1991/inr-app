@@ -1,3 +1,5 @@
+import { ApiPaths } from "@/constants/apiPaths";
+import { useCan } from "@/hooks/usePermission.hook";
 import { inrNormApi } from "@/services/inr-norm";
 import type { PatientInrResponse, PatientInrType } from "@/types/inr-types";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +14,10 @@ export const useGetPatientInr = (params: {
   isError: boolean;
   isFetching: boolean;
 } => {
+  const allowed = useCan(
+    "GET",
+    ApiPaths.patientInrNorm(params.patient_id ?? "{patientId}"),
+  );
   const { data, isLoading, refetch, isError, isFetching } = useQuery<
     PatientInrResponse,
     Error,
@@ -19,7 +25,7 @@ export const useGetPatientInr = (params: {
   >({
     queryKey: ["patient-inr", params],
     queryFn: () => inrNormApi.getPatientInr(params),
-    enabled: !!params?.patient_id,
+    enabled: !!params?.patient_id && allowed,
     select: (response) => response.data,
   });
 

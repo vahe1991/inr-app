@@ -1,5 +1,6 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { AdviceBtnIcon } from "@/components/svg-components/advice-icon";
 import { CheckmarkIcon } from "@/components/svg-components/checkmark-icon";
 import { SuccessIcon } from "@/components/svg-components/success-icon";
@@ -10,6 +11,7 @@ import { FormTextField } from "@/components/ui/FormTextField";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { SuccessModal } from "@/components/ui/SuccessModal";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { jsonParsed } from "@/helpers/jsonParsed";
 import { useCreateOrUpdatePatientAdvice } from "@/hooks/inr-norm/useCreateOrUpdateInrAdvice.hook";
 import { useGetPatentInrAdvice } from "@/hooks/inr-norm/useGetPatentInrAdvice.hook";
@@ -137,6 +139,10 @@ export default function AdviceFormScreen() {
   if (isEditing && isLoadingAdvice) return <LoadingScreen />;
 
   return (
+    <PermissionGate
+      method="POST"
+      path={ApiPaths.patientInrAdvice(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <KeyboardAvoidingView
         className="flex-1"
@@ -265,5 +271,6 @@ export default function AdviceFormScreen() {
         }}
       />
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

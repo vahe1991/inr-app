@@ -33,7 +33,7 @@ export interface Permission {
   path: ApiPath;
 }
 
-type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 type ApiPath =
   | "api/chat/notifications"
@@ -58,6 +58,7 @@ type ApiPath =
   | "api/notifications/read-all"
   | "api/notifications/send"
   | "api/notifications/unread-count"
+  | "api/notifications/{id}"
   | "api/patients"
   | "api/patients/{id}"
   | "api/patients/{patientId}/chat/messages"

@@ -1,7 +1,9 @@
 import { EditIcon } from "@/components/svg-components/edit-icon";
 import { HumanIcon } from "@/components/svg-components/human-icon";
+import { ApiPaths } from "@/constants/apiPaths";
 import { HY } from "@/constants/hy";
 import { useGetInrTTR } from "@/hooks/inr-norm/useGetInrTTR.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -55,6 +57,7 @@ export function InrScaleCard({
   const end = Number(normEnd ?? 0);
   const current = Number(currentInr ?? 0);
   const { inrTTRData } = useGetInrTTR(patientId);
+  const canEditNorm = useCan("POST", ApiPaths.patientInrNorm(patientId));
   const currentPosition = useMemo(() => {
     const min = start;
     const max = end;
@@ -84,6 +87,7 @@ export function InrScaleCard({
         <Text className="font-semibold text-[16px] text-brand-500">
           {HY.inrNormScale}
         </Text>
+        {canEditNorm && onEdit ? (
         <TouchableOpacity onPress={onEdit} activeOpacity={0.6}>
           <View
             style={{
@@ -97,6 +101,7 @@ export function InrScaleCard({
             <EditIcon />
           </View>
         </TouchableOpacity>
+        ) : null}
       </View>
 
       <View

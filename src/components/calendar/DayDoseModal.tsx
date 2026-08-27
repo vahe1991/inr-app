@@ -3,8 +3,11 @@ import { CloseIcon } from "@/components/svg-components/close-icon";
 import { PillIcon } from "@/components/svg-components/pill-icon";
 import { Button } from "@/components/ui/Button";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { normalizeDecimalInput } from "@/helpers/normalizeDecimalInput";
+import { useCan } from "@/hooks/usePermission.hook";
 import dayjs from "dayjs";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Modal,
@@ -51,7 +54,14 @@ export function DayDoseModal({
   onClose,
 }: DayDoseModalProps) {
   const parsed = dayjs(date);
-  const canSave = dose > 0 || isNextTest;
+  const { patientId } = useLocalSearchParams<{ patientId: string }>();
+  const canWriteDose = useCan(
+    "POST",
+    ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}"),
+  );
+  const canWriteNextTest = useCan("POST", ApiPaths.inrResultDosageNextDate);
+  const canSave =
+    (dose > 0 && canWriteDose) || (isNextTest && canWriteNextTest);
   const insets = useSafeAreaInsets();
   const [doseText, setDoseText] = useState(formatDose(dose));
 
@@ -130,14 +140,16 @@ export function DayDoseModal({
 
               <View className="mb-3 flex-row gap-[10px] items-center overflow-hidden rounded-[12px] border border-brand-200">
                 <Pressable
+                  disabled={!canWriteDose}
                   onPress={() => onChangeDose(roundDose(dose - STEP))}
-                  className="h-12 w-12 shrink-0 items-center justify-center bg-brand-50"
+                  className="h-12 w-12 shrink-0 items-center justify-center bg-brand-50 disabled:opacity-40"
                 >
                   <Text className="text-[22px] text-calendar-primary">−</Text>
                 </Pressable>
                 <View className="h-12 min-w-0 flex-1 flex-row items-center justify-center px-1">
                   <TextInput
                     value={doseText}
+                    editable={canWriteDose}
                     onChangeText={onChangeDoseText}
                     onBlur={() => {
                       const num = Number(doseText);
@@ -163,8 +175,9 @@ export function DayDoseModal({
                   </Text>
                 </View>
                 <Pressable
+                  disabled={!canWriteDose}
                   onPress={() => onChangeDose(roundDose(dose + STEP))}
-                  className="h-12 w-12 shrink-0 items-center justify-center bg-brand-50"
+                  className="h-12 w-12 shrink-0 items-center justify-center bg-brand-50 disabled:opacity-40"
                 >
                   <Text className="text-[22px] text-calendar-primary">+</Text>
                 </Pressable>
@@ -176,12 +189,13 @@ export function DayDoseModal({
                   return (
                     <Pressable
                       key={value}
+                      disabled={!canWriteDose}
                       onPress={() => onChangeDose(value)}
                       className={`rounded-lg border px-3 py-2 ${
                         active
                           ? "border-calendar-primary bg-calendar-primary"
                           : "border-brand-200 bg-white"
-                      }`}
+                      } ${canWriteDose ? "" : "opacity-60"}`}
                     >
                       <Text
                         className={`font-[600] text-[13px] ${
@@ -204,12 +218,13 @@ export function DayDoseModal({
                 {HY.nextTestDate}
               </Text>
               <Pressable
+                disabled={!canWriteNextTest}
                 onPress={onToggleNextTest}
                 className={`mb-2 flex-row items-center justify-center gap-2 rounded-[12px] border px-3 py-4 ${
                   isNextTest
                     ? "border-calendar-primary bg-brand-50"
                     : "border-transparent bg-brand-50"
-                }`}
+                } ${canWriteNextTest ? "" : "opacity-60"}`}
               >
                 <CalendarIcon />
                 <Text className="font-medium text-[14px] text-calendar-primary">
@@ -230,12 +245,14 @@ export function DayDoseModal({
               <Button title={HY.cancel} variant="outline" onPress={onClose} />
             </View>
             <View className="flex-1">
-              <Button
-                title={HY.save}
-                loading={loading}
-                disabled={!canSave}
-                onPress={onSave}
-              />
+              {canWriteDose || canWriteNextTest ? (
+                <Button
+                  title={HY.save}
+                  loading={loading}
+                  disabled={!canSave}
+                  onPress={onSave}
+                />
+              ) : null}
             </View>
           </View>
         </View>

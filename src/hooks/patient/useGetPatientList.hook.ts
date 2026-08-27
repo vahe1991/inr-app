@@ -1,3 +1,5 @@
+import { ApiPaths } from "@/constants/apiPaths";
+import { useCan } from "@/hooks/usePermission.hook";
 import { patientApi } from "@/services/patient";
 import type {
   PatientListResponse,
@@ -13,6 +15,7 @@ type PatientsListParams = Omit<PatientsSearchType, "page">;
  */
 export const usePatientsList = (params: PatientsListParams = {}) => {
   const pageSize = params.pageSize ?? 20;
+  const allowed = useCan("GET", ApiPaths.patients);
 
   const query = useInfiniteQuery<PatientListResponse>({
     queryKey: ["patients-list", params.search ?? "", pageSize],
@@ -28,6 +31,7 @@ export const usePatientsList = (params: PatientsListParams = {}) => {
       return meta.page < meta.pageCount ? meta.page + 1 : undefined;
     },
     staleTime: Infinity,
+    enabled: allowed,
   });
 
   const patientsList =

@@ -1,5 +1,7 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { Permission } from "@/components/permission/Permission";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { ComplexityBtnIcon } from "@/components/svg-components/complexity-icon";
 import { EditIcon } from "@/components/svg-components/edit-icon";
 import { PlasCircle } from "@/components/svg-components/plas-circle";
@@ -7,6 +9,7 @@ import { SuccessIcon } from "@/components/svg-components/success-icon";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { useGetPatientInrComplication } from "@/hooks/inr-norm/useGetPatientInrComplication.hook";
 import type { InrComplicationType } from "@/types/patient-types";
@@ -44,6 +47,10 @@ export default function ComplicationsScreen() {
   );
 
   return (
+    <PermissionGate
+      method="GET"
+      path={ApiPaths.patientInrComplication(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <View className="flex-1">
         <ScrollView
@@ -74,6 +81,12 @@ export default function ComplicationsScreen() {
                     {dayjs(item.date).format("DD.MM.YYYY")}
                   </Text>
 
+                  <Permission
+                    method="POST"
+                    path={ApiPaths.patientInrComplication(
+                      patientId ?? "{patientId}",
+                    )}
+                  >
                   <Pressable
                     onPress={() => openForm(item)}
                     hitSlop={8}
@@ -83,6 +96,7 @@ export default function ComplicationsScreen() {
                   >
                     <EditIcon color="#ffffff" />
                   </Pressable>
+                  </Permission>
                 </View>
 
                 <View className="gap-2">
@@ -112,13 +126,19 @@ export default function ComplicationsScreen() {
         </ScrollView>
 
         <View className="px-4 pb-2 pt-3">
+          <Permission
+            method="POST"
+            path={ApiPaths.patientInrComplication(patientId ?? "{patientId}")}
+          >
           <Button
             title={HY.addNewComplication}
             onPress={() => openForm()}
             icon={(color) => <PlasCircle color={color} />}
           />
+          </Permission>
         </View>
       </View>
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

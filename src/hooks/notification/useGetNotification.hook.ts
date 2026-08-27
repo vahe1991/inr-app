@@ -1,3 +1,5 @@
+import { ApiPaths } from "@/constants/apiPaths";
+import { useCan } from "@/hooks/usePermission.hook";
 import { notificationApi } from "@/services/notification";
 import type {
   NotificationDataType,
@@ -27,6 +29,7 @@ function asPage(res: unknown): NotificationDataType {
 export const useGetNotification = (
   params: Omit<NotificationRequestType, "limit" | "offset"> = {},
 ) => {
+  const allowed = useCan("GET", ApiPaths.notifications);
   const query = useInfiniteQuery({
     queryKey: ["notifications", params],
     queryFn: async ({ pageParam }) =>
@@ -51,6 +54,7 @@ export const useGetNotification = (
     },
     staleTime: 0,
     refetchOnMount: "always",
+    enabled: allowed,
   });
 
   const lastPage = query.data?.pages.at(-1);

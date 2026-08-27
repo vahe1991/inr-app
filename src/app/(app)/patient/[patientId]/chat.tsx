@@ -1,4 +1,6 @@
 import { ChatThread } from "@/components/chat/ChatThread";
+import { PermissionGate } from "@/components/permission/PermissionGate";
+import { ApiPaths } from "@/constants/apiPaths";
 import { setChatViewing } from "@/services/chat-socket";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
@@ -20,10 +22,15 @@ export default function PatientChatScreen() {
   if (!patientId) return null;
 
   return (
-    <ChatThread
-      patientId={patientId}
-      patientName={typeof name === "string" ? name : undefined}
-      onBack={() => router.back()}
-    />
+    <PermissionGate
+      method="GET"
+      path={ApiPaths.patientChatMessages(patientId)}
+    >
+      <ChatThread
+        patientId={patientId}
+        patientName={typeof name === "string" ? name : undefined}
+        onBack={() => router.back()}
+      />
+    </PermissionGate>
   );
 }

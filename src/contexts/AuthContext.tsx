@@ -1,6 +1,10 @@
 import { userIdFromToken } from "@/helpers/authToken";
+import { firstAllowedAppHref } from "@/helpers/permissions";
 import { storage } from "@/libs/storage";
-import { login as loginService, logout as logoutService } from "@/services/auth-user";
+import {
+  login as loginService,
+  logout as logoutService,
+} from "@/services/auth-user";
 import type {
   AuthUserData,
   LoginPayload,
@@ -72,7 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const session = response.data;
       await storage.setSession(session);
       await refreshAuth();
-      router.replace("/(app)/patients");
+      router.replace(
+        firstAllowedAppHref(session.permissions, session.user) as never,
+      );
     },
     [refreshAuth],
   );
@@ -104,7 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshAuth,
       setUserId,
     }),
-    [isAuthenticated, user, permissions, userId, logIn, logOut, refreshAuth, setUserId],
+    [
+      isAuthenticated,
+      user,
+      permissions,
+      userId,
+      logIn,
+      logOut,
+      refreshAuth,
+      setUserId,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

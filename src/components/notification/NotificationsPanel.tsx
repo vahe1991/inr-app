@@ -1,3 +1,4 @@
+import { Permission } from "@/components/permission/Permission";
 import { AdviceIcon } from "@/components/svg-components/advice-icon";
 import { CalendarIcon } from "@/components/svg-components/calendar-icon";
 import { ComplexityIcon } from "@/components/svg-components/complexity-icon";
@@ -10,12 +11,14 @@ import { RedHeardIcon } from "@/components/svg-components/red-heard-icon";
 import { TrashIcon } from "@/components/svg-components/trash-icon";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { routeForNotification } from "@/helpers/notificationRoute";
 import { useDeleteNotification } from "@/hooks/notification/useDeleteNotification.hook";
 import { useGetNotification } from "@/hooks/notification/useGetNotification.hook";
 import { useGetUnreadCount } from "@/hooks/notification/useGetUnreadCount.hook";
 import { useReadAllNotifications } from "@/hooks/notification/useReadAllNotifications.hook";
 import { useReadNotification } from "@/hooks/notification/useReadNotification.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import type { NotificationType } from "@/types/notification-type";
 import dayjs from "dayjs";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -38,6 +41,8 @@ function dayNumber(createdAt: number) {
 
 export function NotificationsPanel() {
   const router = useRouter();
+  const canRead = useCan("POST", ApiPaths.notificationsRead);
+  const canDelete = useCan("DELETE", ApiPaths.notifications);
   const [filter, setFilter] = useState<Filter>("unread");
   const [pendingDelete, setPendingDelete] = useState<NotificationType | null>(
     null,
@@ -67,7 +72,7 @@ export function NotificationsPanel() {
   const removeOne = useDeleteNotification();
 
   const onPressItem = (item: NotificationType) => {
-    if (!item.isRead) {
+    if (canRead && !item.isRead) {
       readOne.mutate({ id: item.id });
     }
     const href = routeForNotification(item);
@@ -114,15 +119,17 @@ export function NotificationsPanel() {
           );
         })}
         {filter === "unread" && notifications.length > 0 && (
-          <Pressable
-            onPress={() => readAll.mutate()}
-            disabled={readAll.isPending}
-            className="ml-[auto]"
-          >
-            <IconBadge>
-              <ConfirmIcon />
-            </IconBadge>
-          </Pressable>
+          <Permission method="POST" path={ApiPaths.notificationsReadAll}>
+            <Pressable
+              onPress={() => readAll.mutate()}
+              disabled={readAll.isPending}
+              className="ml-[auto]"
+            >
+              <IconBadge>
+                <ConfirmIcon />
+              </IconBadge>
+            </Pressable>
+          </Permission>
         )}
       </View>
 
@@ -155,25 +162,13 @@ export function NotificationsPanel() {
               ) : null}
             </View>
           }
-          renderItem={({ item }) => (
-            <Swipeable
-              renderRightActions={(_progress, _translation, methods) => (
-                <Pressable
-                  onPress={() => {
-                    methods.close();
-                    setPendingDelete(item);
-                  }}
-                  className="mb-3 justify-center rounded-br-[12px] rounded-tr-[12px] bg-red-600 px-4"
-                >
-                  <TrashIcon color="#ffffff" />
-                </Pressable>
-              )}
-            >
+          renderItem={({ item }) => {
+            const row = (
               <Pressable
                 onPress={() => onPressItem(item)}
                 className={`bg-brand-100 border rounded-tl-[12px] rounded-bl-[12px] py-[4px] px-[8px]  border-brand-50 mb-3 flex-row items-center gap-3 ${
                   item.isRead ? "opacity-80" : "opacity-100"
-                }`}
+                } ${canDelete ? "" : "rounded-tr-[12px] rounded-br-[12px]"}`}
               >
                 <View className="h-11 w-11 items-center justify-center ">
                   {item.type === "test_give_date" && <CalendarIcon />}
@@ -205,8 +200,28 @@ export function NotificationsPanel() {
                 </View>
                 <DotMenuIcon size={18} color="#979797" />
               </Pressable>
-            </Swipeable>
-          )}
+            );
+
+            if (!canDelete) return row;
+
+            return (
+              <Swipeable
+                renderRightActions={(_progress, _translation, methods) => (
+                  <Pressable
+                    onPress={() => {
+                      methods.close();
+                      setPendingDelete(item);
+                    }}
+                    className="mb-3 justify-center rounded-br-[12px] rounded-tr-[12px] bg-red-600 px-4"
+                  >
+                    <TrashIcon color="#ffffff" />
+                  </Pressable>
+                )}
+              >
+                {row}
+              </Swipeable>
+            );
+          }}
         />
       )}
 

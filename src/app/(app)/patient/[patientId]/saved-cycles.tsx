@@ -1,15 +1,18 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { EditIcon } from "@/components/svg-components/edit-icon";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
 import { TrashIcon } from "@/components/svg-components/trash-icon";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { asSavedCycles, type SavedCycle } from "@/helpers/calendarItems";
 import { useGetInrCircle } from "@/hooks/calendar/useGetInrCircle.hook";
 import { useMutateWarfarinCalendar } from "@/hooks/calendar/useMutateWarfarinCalendar.hook";
 import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import dayjs from "dayjs";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
@@ -30,6 +33,10 @@ export default function SavedCyclesScreen() {
     patient_id: patientId ?? "",
   });
   const { mutateAsync, isPending } = useMutateWarfarinCalendar();
+  const canApply = useCan(
+    "POST",
+    ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}"),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -58,6 +65,7 @@ export default function SavedCyclesScreen() {
   if (isLoadingPatient || isLoadingInrCircle) return <LoadingScreen />;
 
   return (
+    <PermissionGate method="GET" path={ApiPaths.inrCycle}>
     <AuthenticatedScreen contentClassName="flex-1">
       <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-3">
         <PatientSubHeader
@@ -75,9 +83,11 @@ export default function SavedCyclesScreen() {
           cycles.map((cycle) => (
             <Pressable
               key={`${cycle.id ?? cycle.name}`}
-              onPress={() => void applyCycle(cycle)}
-              disabled={isPending}
-              className="mb-3 rounded-[12px] bg-brand-50 p-4 active:opacity-80"
+              onPress={canApply ? () => void applyCycle(cycle) : undefined}
+              disabled={!canApply || isPending}
+              className={`mb-3 rounded-[12px] bg-brand-50 p-4 ${
+                canApply ? "active:opacity-80" : ""
+              }`}
             >
               <View className="mb-3 flex-row items-center justify-between">
                 <Text className="font-semibold text-[16px] text-calendar-primary">
@@ -143,5 +153,6 @@ export default function SavedCyclesScreen() {
         }}
       />
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

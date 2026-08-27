@@ -1,3 +1,5 @@
+import { ApiPaths } from "@/constants/apiPaths";
+import { useCan } from "@/hooks/usePermission.hook";
 import { notificationApi } from "@/services/notification";
 import { useQuery } from "@tanstack/react-query";
 
@@ -18,12 +20,14 @@ function asUnreadCount(res: unknown) {
 }
 
 export const useGetUnreadCount = () => {
+  const allowed = useCan("GET", ApiPaths.notificationsUnreadCount);
   const { data, isLoading, refetch, isError, isFetching } = useQuery({
     queryKey: ["notifications-unread-count"],
     queryFn: () => notificationApi.getUnreadCount(),
     staleTime: 0,
     refetchOnMount: "always",
     select: asUnreadCount,
+    enabled: allowed,
   });
 
   return {

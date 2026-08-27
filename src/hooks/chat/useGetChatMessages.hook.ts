@@ -1,12 +1,19 @@
 import { asChatMessagePage } from "@/helpers/chatPayload";
+import { ApiPaths } from "@/constants/apiPaths";
 import { chatKeys } from "@/hooks/chat/keys";
+import { useCan } from "@/hooks/usePermission.hook";
 import { chatApi } from "@/services/chat";
 import { useQuery } from "@tanstack/react-query";
 
 const MESSAGE_LIMIT = 100;
 
 export const useGetChatMessages = (patient_id?: string | number) => {
-  const enabled = patient_id != null && String(patient_id).length > 0;
+  const allowed = useCan(
+    "GET",
+    ApiPaths.patientChatMessages(patient_id ?? "{patientId}"),
+  );
+  const enabled =
+    patient_id != null && String(patient_id).length > 0 && allowed;
 
   const query = useQuery({
     queryKey: chatKeys.messages(patient_id ?? ""),

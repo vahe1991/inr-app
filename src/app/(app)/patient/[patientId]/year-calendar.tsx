@@ -1,8 +1,10 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { MonthCalendarGrid } from "@/components/calendar/MonthCalendarGrid";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { ArrowLeftIcon } from "@/components/svg-components/arrow-left-icon";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { asCalendarItems } from "@/helpers/calendarItems";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
@@ -49,6 +51,10 @@ export default function YearCalendarScreen() {
   const currentYear = dayjs().year();
 
   return (
+    <PermissionGate
+      method="GET"
+      path={ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <ScrollView
         className="flex-1"
@@ -112,5 +118,6 @@ export default function YearCalendarScreen() {
         </View>
       </ScrollView>
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

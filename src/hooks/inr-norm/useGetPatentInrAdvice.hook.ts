@@ -1,3 +1,5 @@
+import { ApiPaths } from "@/constants/apiPaths";
+import { useCan } from "@/hooks/usePermission.hook";
 import { inrNormApi } from "@/services/inr-norm";
 import type {
   InrAdviceApiResponse,
@@ -6,6 +8,10 @@ import type {
 import { useQuery } from "@tanstack/react-query";
 
 export const useGetPatentInrAdvice = (params: Record<string, string>) => {
+  const allowed = useCan(
+    "GET",
+    ApiPaths.patientInrAdvice(params.patient_id ?? "{patientId}"),
+  );
   const { data, isLoading, refetch, isError, isFetching } = useQuery<
     InrAdviceApiResponse,
     Error,
@@ -14,7 +20,7 @@ export const useGetPatentInrAdvice = (params: Record<string, string>) => {
     queryKey: ["patient-inr-advice", params],
     queryFn: () => inrNormApi.getPatientInrAdvice(params),
     staleTime: Infinity,
-    enabled: !!params?.patient_id,
+    enabled: !!params?.patient_id && allowed,
     select: (data) => data.data,
   });
 

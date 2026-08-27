@@ -1,10 +1,12 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { EditBtnIcon } from "@/components/svg-components/edit-icon";
 import { Button } from "@/components/ui/Button";
 import { FormTextField } from "@/components/ui/FormTextField";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { useGetPatientInrNorm } from "@/hooks/inr-norm/useGetPatientInrNorm.hook";
 import { useUpdatePatientInrNorm } from "@/hooks/inr-norm/useUpdatePatientInrNorm.hook";
 import dayjs from "dayjs";
@@ -64,6 +66,10 @@ export default function EditNormScreen() {
   };
 
   return (
+    <PermissionGate
+      method="POST"
+      path={ApiPaths.patientInrNorm(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <ScrollView
         className="flex-1"
@@ -114,5 +120,6 @@ export default function EditNormScreen() {
         />
       </ScrollView>
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

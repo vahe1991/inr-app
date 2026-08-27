@@ -4,11 +4,14 @@ import type { DayMark } from "@/components/calendar/MonthCalendarGrid";
 import { MonthCalendarGrid } from "@/components/calendar/MonthCalendarGrid";
 import { MonthPickerSheet } from "@/components/calendar/MonthPickerSheet";
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
+import { Permission } from "@/components/permission/Permission";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
 import { Button } from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { asCalendarItems, type SavedCycleDay } from "@/helpers/calendarItems";
@@ -19,6 +22,7 @@ import { useMutateInrWarfarinDosage } from "@/hooks/calendar/useMutateInrWarfari
 import { useMutateWarfarinCalendar } from "@/hooks/calendar/useMutateWarfarinCalendar.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
 import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import dayjs from "dayjs";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
@@ -76,6 +80,11 @@ export default function PatientCalendarScreen() {
     useMutateInrCycle();
   const { mutateAsync: deleteDosage, isPending: deleting } =
     useDeleteWarfarinCalendarDosage();
+  const canSaveDose = useCan(
+    "POST",
+    ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}"),
+  );
+  const canSaveNextTest = useCan("POST", ApiPaths.inrResultDosageNextDate);
 
   useFocusEffect(
     useCallback(() => {
@@ -172,7 +181,7 @@ export default function PatientCalendarScreen() {
 
     const existing = recordByDate.get(selected);
     try {
-      if (dose > 0) {
+      if (dose > 0 && canSaveDose) {
         await mutateCalendar({
           patientId,
           ...(existing ? { id: existing.id } : {}),
@@ -181,7 +190,7 @@ export default function PatientCalendarScreen() {
         });
       }
 
-      if (isNextTest && patient?.doctorId) {
+      if (isNextTest && patient?.doctorId && canSaveNextTest) {
         await mutateDosage({
           id: existing?.id ?? 0,
           patient_id: patientId,
@@ -267,6 +276,10 @@ export default function PatientCalendarScreen() {
     : "";
 
   return (
+    <PermissionGate
+      method="GET"
+      path={ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <View className="flex-1 px-4 pt-3">
         <PatientSubHeader
@@ -313,15 +326,25 @@ export default function PatientCalendarScreen() {
           <View className="gap-2 pb-3 pt-2">
             {isActiveCycle ? (
               <>
+                <Permission
+                  method="POST"
+                  path={ApiPaths.patientInrCycle(patientId ?? "{patientId}")}
+                >
                 <Button
                   title={HY.editCycle}
                   onPress={() => setCreateOpen(true)}
                 />
+                </Permission>
+                <Permission
+                  method="DELETE"
+                  path={ApiPaths.patientInrItem(patientId ?? "{patientId}")}
+                >
                 <Button
                   title={HY.removeCycle}
                   variant="outline"
                   onPress={() => setRemoveOpen(true)}
                 />
+                </Permission>
                 <Pressable
                   onPress={() =>
                     router.replace(INRAppRoutes.patient(patientId ?? ""))
@@ -340,6 +363,7 @@ export default function PatientCalendarScreen() {
                 </Text>
                 <View className="flex-row gap-3">
                   <View className="flex-1">
+                    <Permission method="GET" path={ApiPaths.inrCycle}>
                     <Button
                       title={HY.selectCycle}
                       onPress={() =>
@@ -351,13 +375,19 @@ export default function PatientCalendarScreen() {
                         )
                       }
                     />
+                    </Permission>
                   </View>
                   <View className="flex-1">
+                    <Permission
+                      method="POST"
+                      path={ApiPaths.patientInrCycle(patientId ?? "{patientId}")}
+                    >
                     <Button
                       title={HY.createCycle}
                       variant="outline"
                       onPress={() => setCreateOpen(true)}
                     />
+                    </Permission>
                   </View>
                 </View>
               </>
@@ -411,5 +441,6 @@ export default function PatientCalendarScreen() {
         onConfirm={() => void removeApplied()}
       />
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

@@ -1,8 +1,9 @@
-import "react-native-gesture-handler";
 import "@/global.css";
+import "react-native-gesture-handler";
 
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { firstAllowedAppHref } from "@/helpers/permissions";
 import {
   Montserrat_400Regular,
   Montserrat_500Medium,
@@ -60,7 +61,7 @@ const AUTH_ROUTES = new Set([
 ]);
 
 function AuthGate({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, permissions, user } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -69,13 +70,14 @@ function AuthGate({ children }: { children: ReactNode }) {
 
     const first = String(segments[0] ?? "");
     const onAuthScreen = AUTH_ROUTES.has(first);
+    const home = firstAllowedAppHref(permissions, user);
 
     if (!isAuthenticated && !onAuthScreen) {
       router.replace("/sign-in");
     } else if (isAuthenticated && onAuthScreen) {
-      router.replace("/(app)/patients");
+      router.replace(home as never);
     }
-  }, [isAuthenticated, segments, router]);
+  }, [isAuthenticated, permissions, user, segments, router]);
 
   if (isAuthenticated === null) {
     return <LoadingScreen />;

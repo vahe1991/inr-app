@@ -1,4 +1,8 @@
 import { storage } from "@/libs/storage";
+import {
+  isRequestAllowed,
+  PermissionDeniedError,
+} from "@/helpers/permissions";
 import type { AxiosInstance } from "axios";
 import axios, { AxiosError } from "axios";
 import { router } from "expo-router";
@@ -23,6 +27,13 @@ $axios.interceptors.request.use(async (config) => {
 
   if (config.data instanceof FormData) {
     delete config.headers["Content-Type"];
+  }
+
+  const method = (config.method ?? "get").toUpperCase();
+  const path = config.url ?? "";
+  const permissions = await storage.getPermissions();
+  if (!isRequestAllowed(permissions, method, path)) {
+    return Promise.reject(new PermissionDeniedError(method, path));
   }
 
   return config;
