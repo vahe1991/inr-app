@@ -2,6 +2,7 @@ import { userIdFromToken } from "@/helpers/authToken";
 import { firstAllowedAppHref } from "@/helpers/permissions";
 import { storage } from "@/libs/storage";
 import {
+  deleteAccount as deleteAccountService,
   login as loginService,
   logout as logoutService,
 } from "@/services/auth-user";
@@ -30,6 +31,7 @@ type AuthContextValue = {
   name: string | null;
   logIn: (payload: LoginPayload) => Promise<void>;
   logOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   refreshAuth: () => Promise<void>;
   setUserId: (userId: string | null) => void;
 };
@@ -97,6 +99,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace("/sign-in");
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      await deleteAccountService();
+    } catch {
+      /* still clear local session */
+    }
+    await storage.clear();
+    setIsAuthenticated(false);
+    setUser(null);
+    setPermissions(null);
+    setUserIdState(null);
+    router.replace("/sign-in");
+  }, []);
+
   const value = useMemo(
     () => ({
       isAuthenticated,
@@ -107,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: user?.name ?? null,
       logIn,
       logOut,
+      deleteAccount,
       refreshAuth,
       setUserId,
     }),
@@ -117,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userId,
       logIn,
       logOut,
+      deleteAccount,
       refreshAuth,
       setUserId,
     ],

@@ -44,6 +44,10 @@ export const logout = async (): Promise<LogoutResponse> => {
   return data;
 };
 
+export const deleteAccount = async (): Promise<void> => {
+  await $axios.delete("delete-account");
+};
+
 export const createUser = async (user: Record<string, unknown>) => {
   return await $axios.post(`users`, user);
 };

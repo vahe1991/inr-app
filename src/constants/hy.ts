@@ -1,8 +1,13 @@
 export const HY = {
   success: "Հաջողությամբ կատարված է!",
+  deleteAccount: "Ջնջել հաշիվը",
+  deleteAccountConfirm: "Վստա՞հ եք, որ ցանկանում եք ջնջել ձեր հաշիվը։",
+  deleteAccountHint:
+    "Հաշիվը ջնջելուց հետո այլևս չեք կարողանա մուտք գործել ձեր հաշիվ։",
   patients: "Պացիենտներ",
   investigations: "Հետազոտություններ",
   profile: "Պրոֆիլ",
+  privacyPolicy: "Գաղտնիության քաղաքականություն",
   searchPatient: "Ընդլայնված որոնում",
   loadFailed: "Պացիենտների ցանկը բեռնել չհաջողվեց",
   noPatients: "Պացիենտներ չեն գտնվել",

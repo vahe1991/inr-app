@@ -50,7 +50,7 @@ export function ModalCard({
             <View className="flex-row items-center gap-[8px]">
               {icon}
               {description ? (
-                <Text className=" text-[14px] leading-5 text-grey-900">
+                <Text className=" text-[14px] leading-5 text-grey-900 max-w-[280px]">
                   {description}
                 </Text>
               ) : null}
