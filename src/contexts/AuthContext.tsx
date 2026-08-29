@@ -1,5 +1,7 @@
 import { userIdFromToken } from "@/helpers/authToken";
+import { clearClientSession } from "@/helpers/clearClientSession";
 import { firstAllowedAppHref } from "@/helpers/permissions";
+import { subscribeStoredSessionCleared } from "@/libs/session";
 import { storage } from "@/libs/storage";
 import {
   deleteAccount as deleteAccountService,
@@ -72,6 +74,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refreshAuth();
   }, [refreshAuth]);
 
+  useEffect(() => {
+    return subscribeStoredSessionCleared(() => {
+      setIsAuthenticated(false);
+      setUser(null);
+      setPermissions(null);
+      setUserIdState(null);
+    });
+  }, []);
+
   const logIn = useCallback(
     async (payload: LoginPayload) => {
       const response = await loginService(payload);
@@ -85,13 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refreshAuth],
   );
 
-  const logOut = useCallback(async () => {
-    try {
-      await logoutService();
-    } catch {
-      /* still clear local session */
-    }
-    await storage.clear();
+  const resetLocalAuth = useCallback(() => {
     setIsAuthenticated(false);
     setUser(null);
     setPermissions(null);
@@ -99,19 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace("/sign-in");
   }, []);
 
+  const logOut = useCallback(async () => {
+    await clearClientSession({ remote: logoutService });
+    resetLocalAuth();
+  }, [resetLocalAuth]);
+
   const deleteAccount = useCallback(async () => {
-    try {
-      await deleteAccountService();
-    } catch {
-      /* still clear local session */
-    }
-    await storage.clear();
-    setIsAuthenticated(false);
-    setUser(null);
-    setPermissions(null);
-    setUserIdState(null);
-    router.replace("/sign-in");
-  }, []);
+    await clearClientSession({
+      remote: deleteAccountService,
+      forgetRememberedEmail: true,
+    });
+    resetLocalAuth();
+  }, [resetLocalAuth]);
 
   const value = useMemo(
     () => ({

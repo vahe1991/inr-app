@@ -4,6 +4,8 @@ import type {
   Permission,
 } from "@/types/auth-user-type";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const KEYS = {
   token: "token",
@@ -16,9 +18,8 @@ const KEYS = {
   rememberPassword: "remember_password",
 } as const;
 
-export type RememberedCredentials = {
-  email: string;
-  password: string;
+const SECURE_OPTIONS: SecureStore.SecureStoreOptions = {
+  keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
 };
 
 function parseJson<T>(raw: string | null): T | null {
@@ -30,12 +31,58 @@ function parseJson<T>(raw: string | null): T | null {
   }
 }
 
+async function canUseSecureStore() {
+  if (Platform.OS === "web") return false;
+  try {
+    return await SecureStore.isAvailableAsync();
+  } catch {
+    return false;
+  }
+}
+
+async function readToken() {
+  if (await canUseSecureStore()) {
+    const secure = await SecureStore.getItemAsync(KEYS.token, SECURE_OPTIONS);
+    if (secure) return secure;
+
+    const legacy = await AsyncStorage.getItem(KEYS.token);
+    if (legacy) {
+      await SecureStore.setItemAsync(KEYS.token, legacy, SECURE_OPTIONS);
+      await AsyncStorage.removeItem(KEYS.token);
+    }
+    return legacy;
+  }
+
+  return AsyncStorage.getItem(KEYS.token);
+}
+
+async function writeToken(token: string) {
+  if (await canUseSecureStore()) {
+    await SecureStore.setItemAsync(KEYS.token, token, SECURE_OPTIONS);
+    await AsyncStorage.removeItem(KEYS.token);
+    return;
+  }
+
+  await AsyncStorage.setItem(KEYS.token, token);
+}
+
+async function deleteToken() {
+  if (await canUseSecureStore()) {
+    await SecureStore.deleteItemAsync(KEYS.token);
+  }
+  await AsyncStorage.removeItem(KEYS.token);
+}
+
+async function wipeRememberPassword() {
+  await AsyncStorage.removeItem(KEYS.rememberPassword);
+}
+
 export const storage = {
   async getToken() {
-    return AsyncStorage.getItem(KEYS.token);
+    return readToken();
   },
   async setToken(token: string) {
-    await AsyncStorage.setItem(KEYS.token, token);
+    await writeToken(token);
   },
   async getEmail() {
     return AsyncStorage.getItem(KEYS.email);
@@ -88,51 +135,35 @@ export const storage = {
       permissions,
     };
   },
-  async getRememberCredentials(): Promise<RememberedCredentials | null> {
-    const [email, password] = await Promise.all([
-      AsyncStorage.getItem(KEYS.rememberEmail),
-      AsyncStorage.getItem(KEYS.rememberPassword),
-    ]);
-
-    if (!email) return null;
-
-    return { email, password: password ?? "" };
-  },
-  async setRememberCredentials(credentials: RememberedCredentials | null) {
-    if (credentials?.email) {
-      await AsyncStorage.multiSet([
-        [KEYS.rememberEmail, credentials.email],
-        [KEYS.rememberPassword, credentials.password],
-      ]);
-      return;
-    }
-
-    await AsyncStorage.multiRemove([
-      KEYS.rememberEmail,
-      KEYS.rememberPassword,
-    ]);
-  },
   async getRememberEmail() {
+    await wipeRememberPassword();
     return AsyncStorage.getItem(KEYS.rememberEmail);
   },
   async setRememberEmail(email: string | null) {
+    await wipeRememberPassword();
     if (email) {
       await AsyncStorage.setItem(KEYS.rememberEmail, email);
-    } else {
-      await AsyncStorage.removeItem(KEYS.rememberEmail);
+      return;
     }
+    await AsyncStorage.removeItem(KEYS.rememberEmail);
+  },
+  async clearRememberedEmail() {
+    await wipeRememberPassword();
+    await AsyncStorage.removeItem(KEYS.rememberEmail);
   },
   async setSession(data: AuthUserResponseData) {
+    await writeToken(data.token);
     await AsyncStorage.multiSet([
-      [KEYS.token, data.token],
       [KEYS.user, JSON.stringify(data.user)],
       [KEYS.permissions, JSON.stringify(data.permissions)],
       [KEYS.userId, data.user?.id != null ? String(data.user.id) : ""],
       [KEYS.name, data.user?.name ?? ""],
       [KEYS.email, data.user?.email ?? ""],
     ]);
+    await AsyncStorage.removeItem(KEYS.token);
   },
   async clear() {
+    await deleteToken();
     await AsyncStorage.multiRemove([
       KEYS.token,
       KEYS.user,
@@ -140,6 +171,7 @@ export const storage = {
       KEYS.name,
       KEYS.email,
       KEYS.permissions,
+      KEYS.rememberPassword,
     ]);
   },
 };

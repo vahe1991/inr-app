@@ -93,7 +93,8 @@
           }
         }
       ],
-      "./plugins/withAndroidMainPackage"
+      "./plugins/withAndroidMainPackage",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": false,

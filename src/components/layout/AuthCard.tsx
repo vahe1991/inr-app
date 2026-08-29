@@ -1,12 +1,10 @@
-import { HY } from "@/constants/hy";
+import { LegalFooter } from "@/components/layout/LegalFooter";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
   Image,
   Keyboard,
-  Linking,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   View,
@@ -16,8 +14,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-
-const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
 
 type AuthCardProps = {
   children: ReactNode;
@@ -86,18 +82,7 @@ export function AuthCard({ children, title, subtitle }: AuthCardProps) {
         ) : null}
 
         <View className="w-full">{children}</View>
-        <Pressable
-          className="mt-auto w-full items-center"
-          onPress={() => {
-            if (PRIVACY_POLICY_URL) void Linking.openURL(PRIVACY_POLICY_URL);
-          }}
-          accessibilityRole="link"
-          accessibilityLabel={HY.privacyPolicy}
-        >
-          <Text className="text-[14px] font-[600] text-brand-700 underline">
-            {HY.privacyPolicy}
-          </Text>
-        </Pressable>
+        <LegalFooter className="mt-auto w-full items-center gap-3 pt-8" />
       </ScrollView>
     </SafeAreaView>
   );

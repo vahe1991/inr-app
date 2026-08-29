@@ -1,0 +1,52 @@
+# EAS uses this instead of .gitignore when uploading the build archive.
+# Keep the same ignores, then un-ignore Firebase client configs so FCM works.
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# Firebase admin — never upload
+*firebase-adminsdk*.json
+firebase-service-account.json
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders
+/ios
+/android
+
+# Include gitignored FCM client configs for EAS Build + production push
+!google-services.json
+!GoogleService-Info.plist

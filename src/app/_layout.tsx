@@ -4,6 +4,7 @@ import "react-native-gesture-handler";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { firstAllowedAppHref } from "@/helpers/permissions";
+import { queryClient } from "@/libs/queryClient";
 import {
   Montserrat_400Regular,
   Montserrat_500Medium,
@@ -11,7 +12,7 @@ import {
   Montserrat_700Bold,
   useFonts,
 } from "@expo-google-fonts/montserrat";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
@@ -45,12 +46,6 @@ function BrandSplash() {
     </View>
   );
 }
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 0 },
-  },
-});
 
 const AUTH_ROUTES = new Set([
   "sign-in",
