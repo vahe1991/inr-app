@@ -8,6 +8,7 @@
     "scheme": "inrapp",
     "userInterfaceStyle": "light",
     "ios": {
+      "supportsTablet": false,
       "icon": {
         "light": "./assets/images/android-adaptive-foreground.png",
         "dark": "./assets/images/android-adaptive-foreground.png",

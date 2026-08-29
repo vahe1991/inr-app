@@ -5,7 +5,7 @@ import { notificationApi } from "@/services/notification";
 import { getDevicePushToken } from "@/services/push-notifications";
 import { Platform } from "react-native";
 
-async function unregisterPushDevice() {
+export async function unregisterPushDevice() {
   if (Platform.OS !== "android" && Platform.OS !== "ios") return;
 
   const token = await getDevicePushToken();
