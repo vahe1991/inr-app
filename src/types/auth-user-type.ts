@@ -19,6 +19,7 @@ export interface AuthUserResponseData {
 
 export interface AuthUserData {
   id: number;
+  doctorId?: number | string;
   name: string;
   email: string;
   role: "admin" | "doctor" | "patient" | "nurse" | "operator";

@@ -4,17 +4,21 @@ import type { DayMark } from "@/components/calendar/MonthCalendarGrid";
 import { MonthCalendarGrid } from "@/components/calendar/MonthCalendarGrid";
 import { MonthPickerSheet } from "@/components/calendar/MonthPickerSheet";
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
+import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
 import { Permission } from "@/components/permission/Permission";
 import { PermissionGate } from "@/components/permission/PermissionGate";
-import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
 import { Button } from "@/components/ui/Button";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { HY } from "@/constants/hy";
+import { SuccessModal } from "@/components/ui/SuccessModal";
 import { ApiPaths } from "@/constants/apiPaths";
+import { HY } from "@/constants/hy";
 import { INRAppRoutes } from "@/constants/routes.constants";
-import { useAuth } from "@/contexts/AuthContext";
 import { asCalendarItems, type SavedCycleDay } from "@/helpers/calendarItems";
+import {
+  clearCycleDraft,
+  peekCycleDraft,
+  type CycleDraft,
+} from "@/helpers/cycleDraft";
 import { useDeleteWarfarinCalendarDosage } from "@/hooks/calendar/useDeleteWarfarinCalendarDosage.hook";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
 import { useMutateInrWarfarinDosage as useMutateInrCycle } from "@/hooks/calendar/useMutateInrCyrcle.hook";
@@ -26,7 +30,7 @@ import { useCan } from "@/hooks/usePermission.hook";
 import dayjs from "dayjs";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 
 type CalendarMode = "dose" | "test" | "calendar";
 
@@ -57,9 +61,13 @@ export default function PatientCalendarScreen() {
   const [isNextTest, setIsNextTest] = useState(false);
   const [nextTestDate, setNextTestDate] = useState<string | null>(null);
   const [appliedDays, setAppliedDays] = useState<SavedCycleDay[]>([]);
-  const [removeOpen, setRemoveOpen] = useState(false);
+  const [success, setSuccess] = useState<{
+    title: string;
+    description?: string;
+    goToSaved?: boolean;
+  } | null>(null);
+  const [cycleDraft, setCycleDraft] = useState<CycleDraft | null>(null);
 
-  const { userId } = useAuth();
   const { patient } = usePatientById(patientId);
   const { calendarDosages, refetch } = useGetInrWarfarinCalendarDosage({
     patient_id: patientId ?? "",
@@ -89,6 +97,15 @@ export default function PatientCalendarScreen() {
   useFocusEffect(
     useCallback(() => {
       void refetch();
+      const draft = peekCycleDraft();
+      if (!draft?.days.length) return;
+      setCycleDraft(draft);
+      setCreateOpen(true);
+      const first = draft.days[0]?.date;
+      if (first) {
+        setMonth(dayjs(first).startOf("month"));
+        setSelected(first);
+      }
     }, [refetch]),
   );
 
@@ -180,6 +197,7 @@ export default function PatientCalendarScreen() {
     }
 
     const existing = recordByDate.get(selected);
+    let calendarSaved = false;
     try {
       if (dose > 0 && canSaveDose) {
         await mutateCalendar({
@@ -188,6 +206,7 @@ export default function PatientCalendarScreen() {
           date: selected,
           dosage: dose,
         });
+        calendarSaved = true;
       }
 
       if (isNextTest && patient?.doctorId && canSaveNextTest) {
@@ -205,6 +224,9 @@ export default function PatientCalendarScreen() {
 
       setDayOpen(false);
       await refetch();
+      if (calendarSaved) {
+        setSuccess({ title: HY.saved, description: HY.dosage });
+      }
     } catch {
       /* hook alerts */
     }
@@ -224,27 +246,57 @@ export default function PatientCalendarScreen() {
       }
       setAppliedDays(days);
       setCreateOpen(false);
+      setCycleDraft(null);
+      clearCycleDraft();
       await refetch();
+      setSuccess({
+        title: HY.cycle,
+        description: HY.appliedCycleSuccess,
+      });
     } catch {
       /* hook alerts */
     }
   };
 
   const saveNamedCycle = async (name: string, days: SavedCycleDay[]) => {
-    if (!patientId || !userId) {
+    if (!patientId || !patient) {
       Alert.alert(HY.error, HY.patientNotFound);
       return;
     }
     try {
       await mutateCycle({
-        doctor_id: Number(userId),
-        patient_id: Number(patientId),
-        name,
-        days: days.map((day) => ({ date: day.date, dosage: day.dosage })),
+        ...(cycleDraft?.cycleId ? { id: cycleDraft.cycleId } : {}),
+        doctor_id: patient?.doctorId,
+        patient_id: patientId,
+        ...(name ? { name } : {}),
+        days: days.map((day) => ({
+          date: day.date,
+          dosage: day.dosage,
+          ...(day.id ? { id: day.id } : {}),
+        })),
       });
-      Alert.alert(HY.saved, name);
+      setAppliedDays(days);
+      setCreateOpen(false);
+      setCycleDraft(null);
+      clearCycleDraft();
+      await refetch();
+      setSuccess({
+        title: name || HY.cycle,
+        description: HY.updatedCycleSuccess,
+        goToSaved: Boolean(name),
+      });
     } catch {
       /* hook alerts */
+    }
+  };
+
+  const closeSuccess = () => {
+    const goToSaved = success?.goToSaved;
+    setSuccess(null);
+    if (goToSaved && patientId) {
+      router.push(
+        INRAppRoutes.patientSavedCycles(patientId, selected, patient?.doctorId),
+      );
     }
   };
 
@@ -260,7 +312,7 @@ export default function PatientCalendarScreen() {
         });
       }
       setAppliedDays([]);
-      setRemoveOpen(false);
+
       await refetch();
     } catch {
       /* hook alerts */
@@ -280,90 +332,56 @@ export default function PatientCalendarScreen() {
       method="GET"
       path={ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}")}
     >
-    <AuthenticatedScreen contentClassName="flex-1">
-      <View className="flex-1 px-4 pt-3">
-        <PatientSubHeader
-          title={isActiveCycle ? HY.activeDosageCycle : title}
-          description={
-            isActiveCycle
-              ? `${HY.cycleApplied} ${cycleRangeLabel}`
-              : description
-          }
-          icon={<HeartBtnIcon />}
-          onBack={() => router.back()}
-        />
+      <AuthenticatedScreen contentClassName="flex-1">
+        <View className="flex-1 px-4 pt-3">
+          <PatientSubHeader
+            title={isActiveCycle ? HY.activeDosageCycle : title}
+            description={
+              isActiveCycle
+                ? `${HY.cycleApplied} ${cycleRangeLabel}`
+                : description
+            }
+            icon={<HeartBtnIcon />}
+            onBack={() => router.back()}
+          />
 
-        <View className="flex-1">
-          <ScrollView
-            className="flex-1"
-            contentContainerClassName="pb-6"
-            keyboardShouldPersistTaps="handled"
-          >
-            <Text className="mb-3 text-[13px] text-grey-900">
-              {HY.selectDateForDoseOrTest}
-            </Text>
+          <View className="flex-1">
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="pb-6"
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text className="mb-3 text-[13px] text-grey-900">
+                {HY.selectDateForDoseOrTest}
+              </Text>
 
-            <MonthCalendarGrid
-              month={month}
-              selected={selected}
-              marks={marks}
-              onPrev={() => setMonth((value) => value.subtract(1, "month"))}
-              onNext={() => setMonth((value) => value.add(1, "month"))}
-              onPressTitle={() => setMonthPickerOpen(true)}
-              onSelectDay={openDay}
-            />
+              <MonthCalendarGrid
+                month={month}
+                selected={selected}
+                marks={marks}
+                onPrev={() => setMonth((value) => value.subtract(1, "month"))}
+                onNext={() => setMonth((value) => value.add(1, "month"))}
+                onPressTitle={() => setMonthPickerOpen(true)}
+                onSelectDay={openDay}
+              />
 
-            {nextTestDates.size ? (
-              <View className="mt-3 flex-row items-center justify-center gap-2">
-                <View className="h-[7px] w-[7px] rounded-full bg-red-700" />
-                <Text className="text-[12px] font-[600] text-brand-600">
-                  {HY.inrTestDay}
-                </Text>
-              </View>
-            ) : null}
-          </ScrollView>
-
-          <View className="gap-2 pb-3 pt-2">
-            {isActiveCycle ? (
-              <>
-                <Permission
-                  method="POST"
-                  path={ApiPaths.patientInrCycle(patientId ?? "{patientId}")}
-                >
-                <Button
-                  title={HY.editCycle}
-                  onPress={() => setCreateOpen(true)}
-                />
-                </Permission>
-                <Permission
-                  method="DELETE"
-                  path={ApiPaths.patientInrItem(patientId ?? "{patientId}")}
-                >
-                <Button
-                  title={HY.removeCycle}
-                  variant="outline"
-                  onPress={() => setRemoveOpen(true)}
-                />
-                </Permission>
-                <Pressable
-                  onPress={() =>
-                    router.replace(INRAppRoutes.patient(patientId ?? ""))
-                  }
-                  className="items-center py-2"
-                >
-                  <Text className="text-[14px] text-calendar-primary">
-                    {HY.backToMain}
+              {nextTestDates.size ? (
+                <View className="mt-3 flex-row items-center justify-center gap-2">
+                  <View className="h-[7px] w-[7px] rounded-full bg-red-700" />
+                  <Text className="text-[12px] font-[600] text-brand-600">
+                    {HY.inrTestDay}
                   </Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Text className="text-center text-[13px] text-grey-900">
-                  {HY.selectOrCreateCycle}
-                </Text>
-                <View className="flex-row gap-3">
-                  <View className="flex-1">
-                    <Permission method="GET" path={ApiPaths.inrCycle}>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            <View className="gap-2 pb-3 pt-2">
+              <Text className="text-center text-[13px] text-grey-900">
+                {HY.selectOrCreateCycle}
+              </Text>
+              <View className="flex-row gap-3">
+                <View className="flex-1">
+                  <Permission method="GET" path={ApiPaths.inrCycle}>
                     <Button
                       title={HY.selectCycle}
                       onPress={() =>
@@ -371,76 +389,96 @@ export default function PatientCalendarScreen() {
                           INRAppRoutes.patientSavedCycles(
                             patientId ?? "",
                             selected,
+                            patient?.doctorId,
                           ),
                         )
                       }
                     />
-                    </Permission>
-                  </View>
-                  <View className="flex-1">
-                    <Permission
-                      method="POST"
-                      path={ApiPaths.patientInrCycle(patientId ?? "{patientId}")}
-                    >
+                  </Permission>
+                </View>
+                <View className="flex-1">
+                  <Permission
+                    method="POST"
+                    path={ApiPaths.patientInrCycle(patientId ?? "{patientId}")}
+                  >
                     <Button
                       title={HY.createCycle}
                       variant="outline"
                       onPress={() => setCreateOpen(true)}
                     />
-                    </Permission>
-                  </View>
+                  </Permission>
                 </View>
-              </>
-            )}
+              </View>
+            </View>
           </View>
         </View>
-      </View>
 
-      <MonthPickerSheet
-        visible={monthPickerOpen}
-        year={month.year()}
-        month={month.month()}
-        markedDates={markedDates}
-        onClose={() => setMonthPickerOpen(false)}
-        onSelect={(year, monthIndex) => {
-          setMonth(dayjs().year(year).month(monthIndex).startOf("month"));
-          setMonthPickerOpen(false);
-        }}
-      />
+        <MonthPickerSheet
+          visible={monthPickerOpen}
+          year={month.year()}
+          month={month.month()}
+          markedDates={markedDates}
+          onClose={() => setMonthPickerOpen(false)}
+          onSelect={(year, monthIndex) => {
+            setMonth(dayjs().year(year).month(monthIndex).startOf("month"));
+            setMonthPickerOpen(false);
+          }}
+        />
 
-      <DayDoseModal
-        visible={dayOpen}
-        date={selected}
-        dose={dose}
-        isNextTest={isNextTest}
-        loading={savingCalendar || savingDosage}
-        onChangeDose={setDose}
-        onToggleNextTest={() => setIsNextTest((value) => !value)}
-        onSave={() => void saveDay()}
-        onClose={() => setDayOpen(false)}
-      />
+        <DayDoseModal
+          visible={dayOpen}
+          date={selected}
+          dose={dose}
+          isNextTest={isNextTest}
+          loading={savingCalendar || savingDosage}
+          onChangeDose={setDose}
+          onToggleNextTest={() => setIsNextTest((value) => !value)}
+          onSave={() => void saveDay()}
+          onClose={() => setDayOpen(false)}
+        />
 
-      <CreateCycleModal
-        visible={createOpen}
-        month={month}
-        onChangeMonth={setMonth}
-        loading={savingCalendar || savingCycle}
-        onClose={() => setCreateOpen(false)}
-        onApply={(days) => void applyDays(days)}
-        onSave={(name, days) => void saveNamedCycle(name, days)}
-      />
+        <CreateCycleModal
+          visible={createOpen}
+          month={month}
+          onChangeMonth={setMonth}
+          loading={savingCalendar || savingCycle}
+          onClose={() => {
+            const fromSavedCycles =
+              cycleDraft?.action === "apply" || cycleDraft?.action === "edit";
+            setCreateOpen(false);
+            setCycleDraft(null);
+            clearCycleDraft();
+            if (fromSavedCycles && patientId) {
+              router.push(
+                INRAppRoutes.patientSavedCycles(
+                  patientId,
+                  selected,
+                  patient?.doctorId,
+                ),
+              );
+            }
+          }}
+          initialDays={cycleDraft?.days}
+          initialName={cycleDraft?.name}
+          lockName={cycleDraft?.action === "edit"}
+          hideSave={cycleDraft?.action === "apply"}
+          hideApply={cycleDraft?.action === "edit"}
+          cancelLabel={
+            cycleDraft?.action === "apply" || cycleDraft?.action === "edit"
+              ? HY.returnBack
+              : HY.cancel
+          }
+          onApply={(days) => void applyDays(days)}
+          onSave={(name, days) => void saveNamedCycle(name, days)}
+        />
 
-      <ConfirmModal
-        visible={removeOpen}
-        title={HY.removeCurrentCycle}
-        description={`${HY.removeCurrentCycleConfirm}\n${HY.removeCurrentCycleHint}`}
-        confirmLabel={HY.delete}
-        destructive
-        loading={deleting}
-        onCancel={() => setRemoveOpen(false)}
-        onConfirm={() => void removeApplied()}
-      />
-    </AuthenticatedScreen>
+        <SuccessModal
+          visible={success !== null}
+          title={success?.title ?? ""}
+          description={success?.description}
+          onClose={closeSuccess}
+        />
+      </AuthenticatedScreen>
     </PermissionGate>
   );
 }

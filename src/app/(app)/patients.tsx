@@ -10,19 +10,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { shouldOpenOwnPatient } from "@/helpers/permissions";
 import { usePatientsList } from "@/hooks/patient/useGetPatientList.hook";
 import { Redirect, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
 export default function PatientsScreen() {
   const router = useRouter();
   const { user, permissions } = useAuth();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const filters = useMemo(
     () => ({
-      search: search.trim() || undefined,
+      name: debouncedSearch.trim() || null,
       pageSize: 20,
     }),
-    [search],
+    [debouncedSearch],
   );
 
   const {
@@ -40,9 +50,7 @@ export default function PatientsScreen() {
   };
 
   if (shouldOpenOwnPatient(permissions, user) && user?.patientId != null) {
-    return (
-      <Redirect href={INRAppRoutes.patient(user.patientId) as never} />
-    );
+    return <Redirect href={INRAppRoutes.patient(user.patientId) as never} />;
   }
 
   return (

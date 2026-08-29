@@ -37,6 +37,21 @@ export type SavedCycle = {
   createdAt?: string;
 };
 
+/** Shift a cycle so day 1 lands on `startDate`, keeping gaps between days. */
+export function shiftCycleDaysToStart(
+  days: SavedCycleDay[],
+  startDate: string,
+): SavedCycleDay[] {
+  const sorted = [...days].sort((a, b) => a.date.localeCompare(b.date));
+  if (!sorted.length) return [];
+  const origin = dayjs(sorted[0].date);
+  const start = dayjs(startDate);
+  return sorted.map((day) => ({
+    date: start.add(dayjs(day.date).diff(origin, "day"), "day").format("YYYY-MM-DD"),
+    dosage: day.dosage,
+  }));
+}
+
 function asCycleDays(value: unknown): SavedCycleDay[] {
   if (!Array.isArray(value)) return [];
   return value

@@ -1,8 +1,8 @@
 import { AuthCard } from "@/components/layout/AuthCard";
 import { Button } from "@/components/ui/Button";
 import { AUTH_COPY } from "@/constants/authCopy";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Text, View } from "react-native";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 
 export default function CheckEmailScreen() {
   const router = useRouter();
@@ -14,15 +14,30 @@ export default function CheckEmailScreen() {
         {AUTH_COPY.checkEmail.description}
       </Text>
       {email ? (
-        <Text className="mb-8 font-semibold text-sm text-grey-900">{email}</Text>
+        <Text className="mb-8 font-semibold text-sm text-grey-900">
+          {email}
+        </Text>
       ) : (
         <View className="mb-8" />
       )}
-      <Button
-        title={AUTH_COPY.checkEmail.backToLogin}
-        variant="outline"
-        onPress={() => router.replace("/sign-in")}
-      />
+      <View className="mt-4 gap-4">
+        <Button
+          title={AUTH_COPY.resetPassword.submit}
+          onPress={() =>
+            router.replace({
+              pathname: "/reset-password",
+              params: { email },
+            })
+          }
+        />
+        <Link href="/sign-in" asChild>
+          <Pressable className="items-center py-2">
+            <Text className="font-medium text-sm text-calendar-primary">
+              {AUTH_COPY.forgotPassword.backToLogin}
+            </Text>
+          </Pressable>
+        </Link>
+      </View>
     </AuthCard>
   );
 }

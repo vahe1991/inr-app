@@ -18,10 +18,10 @@ export const usePatientsList = (params: PatientsListParams = {}) => {
   const allowed = useCan("GET", ApiPaths.patients);
 
   const query = useInfiniteQuery<PatientListResponse>({
-    queryKey: ["patients-list", params.search ?? "", pageSize],
+    queryKey: ["patients-list", params.name ?? "", pageSize],
     queryFn: ({ pageParam }) =>
       patientApi.fetchPatientsList({
-        search: params.search,
+        name: params.name,
         page: pageParam as number,
         pageSize,
       }),

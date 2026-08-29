@@ -1,8 +1,8 @@
 export interface MutateInrCycleRequestType {
   id?: number;
-  doctor_id: number;
-  patient_id: number;
-  name: string;
+  doctor_id?: number | string;
+  patient_id: number | string;
+  name?: string;
   days: {
     date: string;
     dosage: number;
@@ -53,4 +53,22 @@ interface Meta {
   page: number;
   pageSize: number;
   pageCount: number;
+}
+
+export interface InrCycleResponse {
+  data: InrCycleData;
+}
+
+export interface InrCycleData {
+  cycles: {
+    id: number;
+    doctorId: number;
+    name: string;
+    createdAt: string;
+    days: {
+      id: number;
+      date: string;
+      dosage: number;
+    }[];
+  }[];
 }

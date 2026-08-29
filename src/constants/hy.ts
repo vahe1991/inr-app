@@ -1,4 +1,5 @@
 export const HY = {
+  success: "Հաջողությամբ կատարված է!",
   patients: "Պացիենտներ",
   investigations: "Հետազոտություններ",
   profile: "Պրոֆիլ",
@@ -78,6 +79,7 @@ export const HY = {
   dosage: "Դեղաչափ",
   save: "Պահպանել",
   cancel: "Չեղարկել",
+  returnBack: "Վերադառնալ",
   confirm: "Հաստատել",
   date: "Ամսաթիվ",
   months: [
@@ -158,7 +160,8 @@ export const HY = {
   select: "Ընտրել",
   add: "Ավելացնել",
   edit: "Խմբագրել",
-  delete: "Հեռացնել",
+  remove: "Հեռացնել",
+  delete: "Ջնջել",
   note: "Նշում",
   enterNote: "Մուտքագրել Նշում",
   adviceSingle: "Խորհուրդ",
@@ -178,6 +181,10 @@ export const HY = {
   inrAddedSuccess: "INR արդյունքը հաջողությամբ հաստատվեց",
   inrDeletedSuccess: "INR արդյունքը հաջողությամբ հեռացվեց",
   ok: "Լավ",
+  updatedCycleSuccess: "Ցիկլը հաջողությամբ թարմացվեց",
+  appliedCycleSuccess: "Ցիկլը հաջողությամբ կիրառվեց",
+  deletedCycleSuccess: "Ցիկլը հաջողությամբ հեռացվեց",
+  cycle: "ցիկլ",
   dosageCalendar: "Դեղաչափերի օրացույց",
   prescribeDosage: "Դեղաչափի նշանակում",
   prescribeDosageHint:
@@ -194,7 +201,7 @@ export const HY = {
   savedCyclesHint: "Ընտրեք պահպանված դեղաչափի ցիկլ արագ կիրառելու համար",
   noSavedCycles: "Պահպանված ցիկլեր չկան",
   duration: "Տևողություն",
-  createdOn: "Ստեղծվել է",
+  createdAt: "Ստեղծվել է",
   daysUnit: "օր",
   dailyWarfarinDose: "Օրական Warfarin Դեղաչափ",
   selectOrEnterDailyDose: "Ընտրեք կամ մուտքագրեք օրական դեղաչափը",

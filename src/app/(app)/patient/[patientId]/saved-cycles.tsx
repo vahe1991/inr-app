@@ -1,41 +1,43 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
 import { PermissionGate } from "@/components/permission/PermissionGate";
-import { EditIcon } from "@/components/svg-components/edit-icon";
+import { SavedCycleCard } from "@/components/saved-cycles/SavedCycleCard";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
-import { TrashIcon } from "@/components/svg-components/trash-icon";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { HY } from "@/constants/hy";
 import { ApiPaths } from "@/constants/apiPaths";
-import { asSavedCycles, type SavedCycle } from "@/helpers/calendarItems";
+import { HY } from "@/constants/hy";
+import { INRAppRoutes } from "@/constants/routes.constants";
+import { shiftCycleDaysToStart } from "@/helpers/calendarItems";
+import { setCycleDraft } from "@/helpers/cycleDraft";
 import { useGetInrCircle } from "@/hooks/calendar/useGetInrCircle.hook";
-import { useMutateWarfarinCalendar } from "@/hooks/calendar/useMutateWarfarinCalendar.hook";
-import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
 import { useCan } from "@/hooks/usePermission.hook";
+import type { InrCycleData } from "@/types/calendar-types";
 import dayjs from "dayjs";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback } from "react";
+import { ScrollView, Text } from "react-native";
+
+type InrCycle = InrCycleData["cycles"][number];
 
 export default function SavedCyclesScreen() {
   const router = useRouter();
-  const { patientId, from } = useLocalSearchParams<{
+  const { patientId, doctorId } = useLocalSearchParams<{
     patientId: string;
+    doctorId: string;
     from?: string;
   }>();
-  const startDate = from || dayjs().format("YYYY-MM-DD");
-  const [pendingDelete, setPendingDelete] = useState<SavedCycle | null>(null);
+  // const [pendingDelete, setPendingDelete] = useState<InrCycle | null>(null);
 
-  const { patient, isLoading: isLoadingPatient } = usePatientById(patientId);
   const { inrCircle, isLoadingInrCircle, refetch } = useGetInrCircle({
-    doctor_id: String(patient?.doctorId ?? ""),
-    patient_id: patientId ?? "",
+    doctor_id: doctorId ?? "",
   });
-  const { mutateAsync, isPending } = useMutateWarfarinCalendar();
   const canApply = useCan(
     "POST",
     ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}"),
+  );
+  const canEditCycle = useCan(
+    "POST",
+    ApiPaths.patientInrCycle(patientId ?? "{patientId}"),
   );
 
   useFocusEffect(
@@ -44,115 +46,80 @@ export default function SavedCyclesScreen() {
     }, [refetch]),
   );
 
-  const cycles = useMemo(() => asSavedCycles(inrCircle), [inrCircle]);
+  const cycles = inrCircle.cycles;
 
-  const applyCycle = async (cycle: SavedCycle) => {
+  const openCycleOnCalendar = (cycle: InrCycle, action: "apply" | "edit") => {
     if (!patientId) return;
-    try {
-      for (let index = 0; index < cycle.days.length; index += 1) {
-        await mutateAsync({
-          patientId,
-          date: dayjs(startDate).add(index, "day").format("YYYY-MM-DD"),
-          dosage: cycle.days[index].dosage,
-        });
-      }
+    const today = dayjs().format("YYYY-MM-DD");
+    const days =
+      action === "apply"
+        ? shiftCycleDaysToStart(cycle.days, today)
+        : cycle.days.map((day) => ({
+            id: day.id,
+            date: day.date,
+            dosage: day.dosage,
+          }));
+    setCycleDraft({
+      action,
+      days,
+      ...(action === "edit" ? { name: cycle.name, cycleId: cycle.id } : {}),
+    });
+    if (router.canGoBack()) {
       router.back();
-    } catch {
-      /* hook alerts */
+      return;
     }
+    router.replace(INRAppRoutes.patientCalendar(patientId));
   };
 
-  if (isLoadingPatient || isLoadingInrCircle) return <LoadingScreen />;
+  if (isLoadingInrCircle) return <LoadingScreen />;
 
   return (
     <PermissionGate method="GET" path={ApiPaths.inrCycle}>
-    <AuthenticatedScreen contentClassName="flex-1">
-      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-3">
-        <PatientSubHeader
-          title={HY.savedCycles}
-          description={HY.savedCyclesHint}
-          icon={<HeartBtnIcon />}
-          onBack={() => router.back()}
-        />
+      <AuthenticatedScreen contentClassName="flex-1">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="px-4 pb-8 pt-3"
+        >
+          <PatientSubHeader
+            title={HY.savedCycles}
+            description={HY.savedCyclesHint}
+            icon={<HeartBtnIcon />}
+            onBack={() => router.back()}
+          />
 
-        {!cycles.length ? (
-          <Text className="mt-10 text-center text-[16px] text-grey-400">
-            {HY.noSavedCycles}
-          </Text>
-        ) : (
-          cycles.map((cycle) => (
-            <Pressable
-              key={`${cycle.id ?? cycle.name}`}
-              onPress={canApply ? () => void applyCycle(cycle) : undefined}
-              disabled={!canApply || isPending}
-              className={`mb-3 rounded-[12px] bg-brand-50 p-4 ${
-                canApply ? "active:opacity-80" : ""
-              }`}
-            >
-              <View className="mb-3 flex-row items-center justify-between">
-                <Text className="font-semibold text-[16px] text-calendar-primary">
-                  {cycle.name}
-                </Text>
-                <View className="flex-row items-center gap-3">
-                  <Pressable hitSlop={8}>
-                    <EditIcon />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setPendingDelete(cycle)}
-                    hitSlop={8}
-                  >
-                    <TrashIcon />
-                  </Pressable>
-                </View>
-              </View>
-              <View className="gap-1">
-                <View className="flex-row flex-wrap">
-                  <Text className="text-[13px] text-brand-500">
-                    {HY.duration}:{" "}
-                  </Text>
-                  <Text className="text-[13px] text-grey-900">
-                    {cycle.days.length} {HY.daysUnit}
-                  </Text>
-                </View>
-                <View className="flex-row flex-wrap">
-                  <Text className="text-[13px] text-brand-500">
-                    {HY.dosage}:{" "}
-                  </Text>
-                  <Text className="min-w-0 flex-1 text-[13px] text-grey-900">
-                    {cycle.days
-                      .map((day) => `${day.dosage} ${HY.mg}`)
-                      .join(" - ")}
-                  </Text>
-                </View>
-                {cycle.createdAt ? (
-                  <View className="flex-row flex-wrap">
-                    <Text className="text-[13px] text-brand-500">
-                      {HY.createdOn}:{" "}
-                    </Text>
-                    <Text className="text-[13px] text-grey-900">
-                      {dayjs(cycle.createdAt).format("DD.MM.YYYY")}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            </Pressable>
-          ))
-        )}
-      </ScrollView>
+          {!cycles.length ? (
+            <Text className="mt-10 text-center text-[16px] text-grey-400">
+              {HY.noSavedCycles}
+            </Text>
+          ) : (
+            cycles.map((cycle) => (
+              <SavedCycleCard
+                key={`${cycle.id ?? cycle.name}`}
+                cycle={cycle}
+                canApply={canApply}
+                canEditCycle={canEditCycle}
+                onApply={(item) => openCycleOnCalendar(item, "apply")}
+                onEdit={(item) => openCycleOnCalendar(item, "edit")}
+                // onDelete={setPendingDelete}
+              />
+            ))
+          )}
+        </ScrollView>
 
-      <ConfirmModal
-        visible={Boolean(pendingDelete)}
-        title={HY.deleteCycle}
-        description={`${HY.deleteCycleConfirm}\n${HY.deleteCycleHint}`}
-        confirmLabel={HY.delete}
-        destructive
-        onCancel={() => setPendingDelete(null)}
-        onConfirm={() => {
-          Alert.alert(HY.comingSoon);
-          setPendingDelete(null);
-        }}
-      />
-    </AuthenticatedScreen>
+        {/* <ConfirmModal
+          visible={Boolean(pendingDelete)}
+          title={HY.deleteCycle}
+          description={HY.deleteCycleConfirm}
+          subInfo={HY.deleteCycleHint}
+          confirmLabel={HY.delete}
+          destructive
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={() => {
+            Alert.alert(HY.comingSoon);
+            setPendingDelete(null);
+          }}
+        /> */}
+      </AuthenticatedScreen>
     </PermissionGate>
   );
 }

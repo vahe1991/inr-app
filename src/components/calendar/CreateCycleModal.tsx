@@ -4,8 +4,8 @@ import { CloseIcon } from "@/components/svg-components/close-icon";
 import { WarningFillIcon } from "@/components/svg-components/warning-fill-icon";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { HY } from "@/constants/hy";
 import { ApiPaths } from "@/constants/apiPaths";
+import { HY } from "@/constants/hy";
 import type { SavedCycleDay } from "@/helpers/calendarItems";
 import { useCan } from "@/hooks/usePermission.hook";
 import dayjs, { type Dayjs } from "dayjs";
@@ -99,6 +99,12 @@ type CreateCycleModalProps = {
   month: Dayjs;
   onChangeMonth: (month: Dayjs) => void;
   loading?: boolean;
+  initialDays?: SavedCycleDay[];
+  initialName?: string;
+  lockName?: boolean;
+  hideSave?: boolean;
+  hideApply?: boolean;
+  cancelLabel?: string;
   onClose: () => void;
   onApply: (days: SavedCycleDay[]) => void;
   onSave: (name: string, days: SavedCycleDay[]) => void;
@@ -121,6 +127,12 @@ export function CreateCycleModal({
   month,
   onChangeMonth,
   loading,
+  initialDays,
+  initialName,
+  lockName,
+  hideSave,
+  hideApply,
+  cancelLabel = HY.cancel,
   onClose,
   onApply,
   onSave,
@@ -156,7 +168,12 @@ export function CreateCycleModal({
       setName("");
       setDragging(false);
       setMonthPickerOpen(false);
+      return;
     }
+    setDays(sortDays(initialDays ?? []));
+    setName(initialName ?? "");
+    // Only re-seed when the modal opens, not while the user edits days.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed from props at open
   }, [visible]);
 
   const marks = useMemo(() => {
@@ -222,7 +239,7 @@ export function CreateCycleModal({
               </View>
               <View className="mb-[16px] flex-row items-center justify-between">
                 <Text className="font-semibold text-[18px] text-calendar-primary">
-                  {HY.createDosageCycle}
+                  {lockName ? HY.editCycle : HY.createDosageCycle}
                 </Text>
                 <Pressable
                   onPress={onClose}
@@ -295,18 +312,18 @@ export function CreateCycleModal({
                               }
                             />
                             {canWriteCycle ? (
-                            <Pressable
-                              onPress={() =>
-                                setDays((current) =>
-                                  current.filter(
-                                    (day) => day.date !== item.date,
-                                  ),
-                                )
-                              }
-                              className="h-[35px] w-9 items-center justify-center rounded-r-lg bg-white"
-                            >
-                              <CloseIcon color="#FF4D4F" />
-                            </Pressable>
+                              <Pressable
+                                onPress={() =>
+                                  setDays((current) =>
+                                    current.filter(
+                                      (day) => day.date !== item.date,
+                                    ),
+                                  )
+                                }
+                                className="h-[35px] w-9 items-center justify-center rounded-r-lg bg-white"
+                              >
+                                <CloseIcon color="#FF4D4F" />
+                              </Pressable>
                             ) : null}
                           </View>
                         </View>
@@ -323,7 +340,7 @@ export function CreateCycleModal({
                   paddingBottom: Math.max(insets.bottom, 12),
                 }}
               >
-                {days.length && canSaveCycle ? (
+                {days.length && canSaveCycle && !hideSave && !lockName ? (
                   <Button
                     title={HY.saveCycle}
                     variant="outline"
@@ -333,18 +350,28 @@ export function CreateCycleModal({
                 <View className="flex-row items-center justify-end gap-3">
                   <Button
                     fullWidth={false}
-                    title={HY.cancel}
+                    title={cancelLabel}
                     variant="ghost"
                     onPress={onClose}
                   />
-                  {canApplyCycle ? (
-                  <Button
-                    fullWidth={false}
-                    title={HY.applyDosage}
-                    disabled={!days.length}
-                    loading={loading}
-                    onPress={() => onApply(days)}
-                  />
+                  {lockName && canSaveCycle ? (
+                    <Button
+                      fullWidth={false}
+                      title={HY.editCycle}
+                      disabled={!days.length}
+                      loading={loading}
+                      onPress={() =>
+                        onSave(initialName?.trim() || name.trim(), days)
+                      }
+                    />
+                  ) : canApplyCycle && !hideApply ? (
+                    <Button
+                      fullWidth={false}
+                      title={HY.applyDosage}
+                      disabled={!days.length}
+                      loading={loading}
+                      onPress={() => onApply(days)}
+                    />
                   ) : null}
                 </View>
               </View>
@@ -393,15 +420,12 @@ export function CreateCycleModal({
               </View>
               <View className="flex-1">
                 {canSaveCycle ? (
-                <Button
-                  title={HY.save}
-                  disabled={!name.trim()}
-                  loading={loading}
-                  onPress={() => {
-                    onSave(name.trim(), days);
-                    setNameOpen(false);
-                  }}
-                />
+                  <Button
+                    title={HY.save}
+                    disabled={!name.trim()}
+                    loading={loading}
+                    onPress={() => onSave(name.trim(), days)}
+                  />
                 ) : null}
               </View>
             </View>

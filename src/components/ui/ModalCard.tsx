@@ -5,6 +5,7 @@ type ModalCardProps = {
   visible: boolean;
   title: string;
   description?: string;
+  subInfo?: string;
   icon?: ReactNode;
   onClose: () => void;
   children?: ReactNode;
@@ -15,6 +16,7 @@ export function ModalCard({
   visible,
   title,
   description,
+  subInfo,
   icon,
   onClose,
   children,
@@ -32,7 +34,7 @@ export function ModalCard({
         className="flex-1 items-center justify-center bg-black/40 px-5"
       >
         <Pressable
-          className="w-full rounded-2xl bg-brand-100 p-5"
+          className="w-full rounded-2xl bg-white p-5"
           style={{
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 4 },
@@ -41,18 +43,23 @@ export function ModalCard({
             elevation: 6,
           }}
         >
-          <View className="flex-row items-center gap-3">
-            {icon}
-            <View className="min-w-0 flex-1">
-              <Text className="font-semibold text-[16px] leading-7 text-brand-700">
-                {title}
-              </Text>
+          <View className="gap-[4px]">
+            <Text className="font-[600] mb-[4px] text-[16px] leading-7 text-grey-900">
+              {title}
+            </Text>
+            <View className="flex-row items-center gap-[8px]">
+              {icon}
               {description ? (
-                <Text className="mt-0.5 text-[12px] leading-5 text-grey-700">
+                <Text className=" text-[14px] leading-5 text-grey-900">
                   {description}
                 </Text>
               ) : null}
             </View>
+            {subInfo ? (
+              <Text className="text-[12px] pl-[28px] leading-5 text-grey-500">
+                {subInfo}
+              </Text>
+            ) : null}
           </View>
 
           <View className="mt-4 h-px bg-brand-600" />

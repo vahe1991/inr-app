@@ -2,7 +2,7 @@ import { AuthCard } from "@/components/layout/AuthCard";
 import { Button } from "@/components/ui/Button";
 import { FormTextField } from "@/components/ui/FormTextField";
 import { AUTH_COPY } from "@/constants/authCopy";
-import { requestPasswordReset } from "@/services/auth-password";
+import { useForgotPasswordReset } from "@/hooks/auth-user/useForgotPasswordReset.hook";
 import { Link, useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { Pressable, Text, View } from "react-native";
@@ -15,24 +15,26 @@ type ForgotPasswordForm = {
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const {
-    control,
-    handleSubmit,
-    setError,
-    formState: { isSubmitting },
-  } = useForm<ForgotPasswordForm>({ defaultValues: { email: "" } });
-
-  const onSubmit = async ({ email }: ForgotPasswordForm) => {
-    const trimmed = email.trim();
-    try {
-      await requestPasswordReset({ email: trimmed });
+  const { mutate: forgotPassword, isPending } = useForgotPasswordReset(
+    (_data, variables) => {
       router.push({
         pathname: "/check-email",
-        params: { email: trimmed },
+        params: { email: variables.email },
       });
-    } catch {
-      setError("email", { message: AUTH_COPY.login.genericError });
-    }
+    },
+    (e) => {
+      setError("email", {
+        message:
+          e?.response?.data?.errors?.email?.[0] || AUTH_COPY.login.genericError,
+      });
+    },
+  );
+  const { control, handleSubmit, setError } = useForm<ForgotPasswordForm>({
+    defaultValues: { email: "" },
+  });
+
+  const onSubmit = ({ email }: ForgotPasswordForm) => {
+    forgotPassword({ email: email.trim() });
   };
 
   return (
@@ -60,7 +62,7 @@ export default function ForgotPasswordScreen() {
         <Button
           title={AUTH_COPY.forgotPassword.submit}
           onPress={handleSubmit(onSubmit)}
-          loading={isSubmitting}
+          loading={isPending}
         />
         <Link href="/sign-in" asChild>
           <Pressable className="items-center py-2">

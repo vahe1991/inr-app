@@ -73,7 +73,7 @@ export function AuthCard({ children, title, subtitle }: AuthCardProps) {
               </Text>
             ) : null}
             {subtitle ? (
-              <Text className="font-[700] text-[16px] leading-6 text-grey-900">
+              <Text className="font-[700] text-[16px] leading-6 text-grey-900 text-center">
                 {subtitle}
               </Text>
             ) : null}

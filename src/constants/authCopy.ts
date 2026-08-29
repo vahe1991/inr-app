@@ -40,6 +40,10 @@ export const AUTH_COPY = {
     submit: "Փոխել գաղտնաբառը",
     mismatch: "Գաղտնաբառերը չեն համընկնում",
     minLength: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ",
+    tokenLabel: "Կոդ",
+    tokenPlaceholder: "մուտքագրել կոդը",
+    requiredToken: "Կոդ դաշտը պարտադիր է",
+    invalidToken: "Մուտքագրեք վավեր կոդ",
   },
   resetSuccess: {
     title: "ԳԱՂՏՆԱԲԱՌԸ ՀԱՋՈՂՈՒԹՅԱՄԲ ՓՈԽՎԵՑ",
