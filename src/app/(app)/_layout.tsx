@@ -1,13 +1,18 @@
 import { AppDrawerContent } from "@/components/layout/AppDrawerContent";
+import { ApiPaths } from "@/constants/apiPaths";
 import { HY } from "@/constants/hy";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatSocket } from "@/hooks/chat/useChatSocket.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import { usePushNotifications } from "@/hooks/usePushNotifications.hook";
 import { Drawer } from "expo-router/drawer";
 import { SymbolView } from "expo-symbols";
 
 export default function AppLayout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const canPatients = useCan("GET", ApiPaths.patients);
+  const canInvestigations = useCan("GET", ApiPaths.inr);
+  const showPatients = canPatients && user?.role !== "patient";
   usePushNotifications(isAuthenticated === true);
   useChatSocket(isAuthenticated === true);
 
@@ -34,6 +39,7 @@ export default function AppLayout() {
         options={{
           title: HY.patients,
           drawerLabel: HY.patients,
+          drawerItemStyle: showPatients ? undefined : { display: "none" },
           drawerIcon: ({ color, size }) => (
             <SymbolView
               name={{
@@ -52,6 +58,7 @@ export default function AppLayout() {
         options={{
           title: HY.investigations,
           drawerLabel: HY.investigations,
+          drawerItemStyle: canInvestigations ? undefined : { display: "none" },
           drawerIcon: ({ color, size }) => (
             <SymbolView
               name={{

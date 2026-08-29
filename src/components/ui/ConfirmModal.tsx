@@ -1,3 +1,4 @@
+import { TrashIcon } from "@/components/svg-components/trash-icon";
 import { WarningFillIcon } from "@/components/svg-components/warning-fill-icon";
 import { Button } from "@/components/ui/Button";
 import { ModalCard } from "@/components/ui/ModalCard";
@@ -13,6 +14,7 @@ type ConfirmModalProps = {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
+  subInfo?: string;
   loading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -22,6 +24,7 @@ export function ConfirmModal({
   visible,
   title,
   description,
+  subInfo,
   icon = <WarningFillIcon />,
   confirmLabel = HY.confirm,
   cancelLabel = HY.cancel,
@@ -35,21 +38,36 @@ export function ConfirmModal({
       visible={visible}
       title={title}
       description={description}
+      subInfo={subInfo}
       icon={icon}
       onClose={onCancel}
     >
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <Button title={cancelLabel} variant="outline" onPress={onCancel} />
-        </View>
-        <View className="flex-1">
-          <Button
-            title={confirmLabel}
-            variant={destructive ? "destructive" : "primary"}
-            loading={loading}
-            onPress={onConfirm}
-          />
-        </View>
+      <View className="flex-row justify-end gap-3">
+        <Button
+          title={cancelLabel}
+          variant="outline"
+          onPress={onCancel}
+          fullWidth={false}
+        />
+
+        <Button
+          title={confirmLabel}
+          variant={
+            HY.delete === confirmLabel || HY.remove === confirmLabel
+              ? "danger"
+              : destructive
+                ? "destructive"
+                : "primary"
+          }
+          loading={loading}
+          onPress={onConfirm}
+          fullWidth={false}
+          icon={
+            HY.delete === confirmLabel || HY.remove === confirmLabel ? (
+              <TrashIcon />
+            ) : undefined
+          }
+        />
       </View>
     </ModalCard>
   );

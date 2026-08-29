@@ -2,9 +2,11 @@ import MenueIcon from "@/components/svg-components/menue-icon";
 import MsgIcon from "@/components/svg-components/msg-icon";
 import NotificationIcon from "@/components/svg-components/notification-icon";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { useGetChatUnreadCount } from "@/hooks/chat/useGetChatUnreadCount.hook";
 import { useGetUnreadCount } from "@/hooks/notification/useGetUnreadCount.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import { useFocusEffect, useNavigation, usePathname, useRouter } from "expo-router";
 import { useCallback, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -44,14 +46,18 @@ export function AppHeader({
   const { unreadCount, refetch } = useGetUnreadCount();
   const { unreadCount: chatUnread, refetch: refetchChatUnread } =
     useGetChatUnreadCount();
+  const canNotifications = useCan("GET", ApiPaths.notifications);
+  const canMessages = useCan("GET", ApiPaths.chatNotifications);
+  const canNotificationCount = useCan("GET", ApiPaths.notificationsUnreadCount);
+  const canChatCount = useCan("GET", ApiPaths.chatUnreadCount);
   const onNotifications = pathname.includes("/notifications");
   const onMessages = pathname.includes("/messages");
 
   useFocusEffect(
     useCallback(() => {
-      void refetch();
-      void refetchChatUnread();
-    }, [refetch, refetchChatUnread]),
+      if (canNotificationCount) void refetch();
+      if (canChatCount) void refetchChatUnread();
+    }, [canChatCount, canNotificationCount, refetch, refetchChatUnread]),
   );
 
   return (
@@ -67,6 +73,7 @@ export function AppHeader({
       </View>
       <View className="flex-row items-center gap-[1px]">
         {right}
+        {canNotifications ? (
         <Pressable
           onPress={() => {
             if (onNotifications) return;
@@ -79,6 +86,8 @@ export function AppHeader({
         >
           <NotificationIcon isUnreadNotifications={unreadCount > 0} />
         </Pressable>
+        ) : null}
+        {canMessages ? (
         <Pressable
           onPress={() => {
             if (onMessages) return;
@@ -91,6 +100,7 @@ export function AppHeader({
         >
           <MsgIcon isHaveMsg={chatUnread > 0} />
         </Pressable>
+        ) : null}
         {showMenu ? (
           <Pressable
             onPress={() => openNearestDrawer(navigation)}

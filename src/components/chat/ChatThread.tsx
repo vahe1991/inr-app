@@ -3,6 +3,7 @@ import { ArrowLeftIcon } from "@/components/svg-components/arrow-left-icon";
 import { MicrophoneIcon } from "@/components/svg-components/micropone-icon";
 import { PaperclipIcon } from "@/components/svg-components/paperclip-icon";
 import { SendIcon } from "@/components/svg-components/send-icon";
+import { ApiPaths } from "@/constants/apiPaths";
 import { HY } from "@/constants/hy";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -20,6 +21,7 @@ import { useGetChatMessages } from "@/hooks/chat/useGetChatMessages.hook";
 import { useReadChat } from "@/hooks/chat/useReadChat.hook";
 import { useSendChatMessage } from "@/hooks/chat/useSendChatMessage.hook";
 import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import { sendChatTyping } from "@/services/chat-socket";
 import type { ChatFileInput, ChatMessageType } from "@/types/chat-type";
 import dayjs from "dayjs";
@@ -77,7 +79,13 @@ export function ChatThread({
   const listRef = useRef<FlatList<ThreadRow>>(null);
   const [draft, setDraft] = useState("");
   const [file, setFile] = useState<ChatFileInput | null>(null);
-  const { name: doctorName, userId } = useAuth();
+  const { name, userId, user } = useAuth();
+  const canSend = useCan("POST", ApiPaths.patientChatMessages(patientId));
+  const canAttach = useCan(
+    "POST",
+    ApiPaths.patientChatMessagesUpload(patientId),
+  );
+  const canRead = useCan("POST", ApiPaths.patientChatRead(patientId));
   const { patient } = usePatientById(patientId);
   const { messages, isLoadingMessages, refetch, isError } =
     useGetChatMessages(patientId);
@@ -137,16 +145,37 @@ export function ChatThread({
   useFocusEffect(
     useCallback(() => {
       void refetch();
-      markRead(patientId);
+      if (canRead) markRead(patientId);
       const pushSub = Notifications.addNotificationReceivedListener(() => {
         void refetch();
       });
       return () => pushSub.remove();
-    }, [markRead, patientId, refetch]),
+    }, [canRead, markRead, patientId, refetch]),
   );
 
-  const title =
-    patientName || patient?.givenName || patient?.fullName || HY.patient;
+  const counterpartName = useMemo(() => {
+    const patientTitle =
+      patientName || patient?.givenName || patient?.fullName || HY.patient;
+    if (user?.role !== "patient") return patientTitle;
+
+    const doctorFromPatient =
+      typeof patient?.doctor === "string" ? patient.doctor.trim() : "";
+    const doctorFromMessages = messages.find(
+      (item) => !isOwnChatMessage(item, userId, name),
+    )?.senderName;
+
+    return doctorFromPatient || doctorFromMessages || HY.doctor;
+  }, [
+    messages,
+    patient?.doctor,
+    patient?.fullName,
+    patient?.givenName,
+    patientName,
+    name,
+    user?.role,
+    userId,
+  ]);
+  const title = counterpartName;
   const rows = useMemo(() => [...asThreadRows(messages)].reverse(), [messages]);
 
   const pickFile = async () => {
@@ -284,8 +313,8 @@ export function ChatThread({
               ) : (
                 <MessageBubble
                   message={item.item}
-                  mine={isOwnChatMessage(item.item, userId, doctorName)}
-                  selfName={doctorName || HY.doctor}
+                  mine={isOwnChatMessage(item.item, userId, name)}
+                  selfName={name || HY.user}
                   patientName={title}
                   patientPhoto={patientPhoto}
                 />
@@ -310,15 +339,17 @@ export function ChatThread({
         <View className="bg-white">
           <View className="flex-row items-end gap-2 px-3 pt-2 pb-2">
             <View className="min-h-12 min-w-0 flex-1 flex-row items-center rounded-full border border-grey-50 bg-white px-3">
-              <Pressable
-                onPress={() => void pickFile()}
-                hitSlop={8}
-                className="mr-2 h-8 w-8 items-center justify-center"
-                accessibilityRole="button"
-                accessibilityLabel={HY.attach}
-              >
-                <PaperclipIcon size={16} />
-              </Pressable>
+              {canAttach ? (
+                <Pressable
+                  onPress={() => void pickFile()}
+                  hitSlop={8}
+                  className="mr-2 h-8 w-8 items-center justify-center"
+                  accessibilityRole="button"
+                  accessibilityLabel={HY.attach}
+                >
+                  <PaperclipIcon size={16} />
+                </Pressable>
+              ) : null}
               <View className="min-w-0 flex-1 py-2">
                 {file ? (
                   <Pressable onPress={() => setFile(null)} className="mb-1">
@@ -337,6 +368,7 @@ export function ChatThread({
                       : draft
                   }
                   onChangeText={(value) => {
+                    if (!canSend) return;
                     setDraft(value);
                     const id = Number(patientId);
                     if (value.trim() && Number.isFinite(id) && id > 0) {
@@ -345,35 +377,39 @@ export function ChatThread({
                   }}
                   placeholder={HY.writeMessage}
                   placeholderTextColor="#979797"
-                  editable={!recorderState.isRecording}
+                  editable={canSend && !recorderState.isRecording}
                   multiline
                   className="max-h-24 p-0 font-sans text-[14px] text-grey-900"
                 />
               </View>
             </View>
-            <Pressable
-              onPress={() => onSend()}
-              disabled={
-                sendMessage.isPending ||
-                recorderState.isRecording ||
-                (!draft.trim() && !file)
-              }
-              className="h-12 w-12 items-center justify-center rounded-full bg-brand-900 disabled:opacity-40"
-              accessibilityRole="button"
-              accessibilityLabel={HY.send}
-            >
-              <SendIcon size={18} />
-            </Pressable>
-            <Pressable
-              onPress={() => void toggleRecording()}
-              className={`h-12 w-11 items-center justify-center rounded-xl ${
-                recorderState.isRecording ? "bg-red-50" : "bg-grey-10"
-              }`}
-              accessibilityRole="button"
-              accessibilityLabel={HY.recordVoice}
-            >
-              <MicrophoneIcon size={18} />
-            </Pressable>
+            {canSend ? (
+              <Pressable
+                onPress={() => onSend()}
+                disabled={
+                  sendMessage.isPending ||
+                  recorderState.isRecording ||
+                  (!draft.trim() && !file)
+                }
+                className="h-12 w-12 items-center justify-center rounded-full bg-brand-900 disabled:opacity-40"
+                accessibilityRole="button"
+                accessibilityLabel={HY.send}
+              >
+                <SendIcon size={18} />
+              </Pressable>
+            ) : null}
+            {canAttach ? (
+              <Pressable
+                onPress={() => void toggleRecording()}
+                className={`h-12 w-11 items-center justify-center rounded-xl ${
+                  recorderState.isRecording ? "bg-red-50" : "bg-grey-10"
+                }`}
+                accessibilityRole="button"
+                accessibilityLabel={HY.recordVoice}
+              >
+                <MicrophoneIcon size={18} />
+              </Pressable>
+            ) : null}
           </View>
           <View
             style={{

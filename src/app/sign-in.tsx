@@ -34,11 +34,11 @@ export default function SignInScreen() {
 
   useEffect(() => {
     void (async () => {
-      const remembered = await storage.getRememberCredentials();
-      if (remembered) {
+      const rememberedEmail = await storage.getRememberEmail();
+      if (rememberedEmail) {
         reset({
-          email: remembered.email,
-          password: remembered.password,
+          email: rememberedEmail,
+          password: "",
           remember: true,
         });
       }
@@ -48,14 +48,7 @@ export default function SignInScreen() {
   const onSubmit = async ({ email, password, remember }: SignInForm) => {
     clearErrors("root");
     try {
-      if (remember) {
-        await storage.setRememberCredentials({
-          email: email.trim(),
-          password,
-        });
-      } else {
-        await storage.setRememberCredentials(null);
-      }
+      await storage.setRememberEmail(remember ? email.trim() : null);
 
       await logIn({ email: email.trim(), password });
     } catch (error) {
@@ -106,7 +99,7 @@ export default function SignInScreen() {
         secureTextEntry
       />
 
-      <View className="mb-8 mt-1 gap-3">
+      <View className="mb-8 mt-1">
         <Controller
           control={control}
           name="remember"

@@ -1,22 +1,26 @@
+import { ApiPaths } from "@/constants/apiPaths";
+import { useCan } from "@/hooks/usePermission.hook";
 import { calendarApi } from "@/services/calendar";
-import { InrWarfarinCalendarResponse } from "@/types/calendar-types";
+import type { InrCycleData, InrCycleResponse } from "@/types/calendar-types";
 
 import { useQuery } from "@tanstack/react-query";
 
-export const useGetInrCircle = (params: {
-  doctor_id: string;
-  patient_id: string;
-}) => {
-  const { data, isLoading, refetch, isError, isFetching } = useQuery({
+export const useGetInrCircle = (params: { doctor_id?: string | number }) => {
+  const allowed = useCan("GET", ApiPaths.inrCycle);
+  const { data, isLoading, refetch, isError, isFetching } = useQuery<
+    InrCycleResponse,
+    Error,
+    InrCycleData
+  >({
     queryKey: ["inr-circle", params],
     queryFn: () => calendarApi.getInrCycle(params),
     staleTime: Infinity,
-    select: (data: InrWarfarinCalendarResponse) => data.data,
-    enabled: !!params.patient_id,
+    select: (response) => response.data,
+    enabled: !!params.doctor_id && allowed,
   });
 
   return {
-    inrCircle: data ?? [],
+    inrCircle: data ?? { cycles: [] },
     isLoadingInrCircle: isLoading,
     refetch,
     isError,

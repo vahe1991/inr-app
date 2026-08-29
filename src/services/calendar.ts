@@ -1,5 +1,6 @@
 import $axios from "@/libs/axios";
 import {
+  InrCycleResponse,
   InrWarfarinDosageRequestType,
   MutateInrCycleRequestType,
 } from "@/types/calendar-types";
@@ -28,11 +29,13 @@ export const calendarApi = {
   }) {
     return await $axios.delete(`patients/${patient_id}/inr/${calendarId}`);
   },
-  async getInrCycle(params: { doctor_id: string; patient_id: string }) {
-    return await $axios.get("inr-cycle", { params });
+  async getInrCycle(params: {
+    doctor_id?: string | number;
+  }): Promise<InrCycleResponse> {
+    return (await $axios.get<InrCycleResponse>("inr-cycle", { params })).data;
   },
-  async mutateInrCycle({ patient_id, ...data }: MutateInrCycleRequestType) {
-    return await $axios.post(`patients/${patient_id}/inr-cycle`, data);
+  async mutateInrCycle(data: MutateInrCycleRequestType) {
+    return await $axios.post(`patients/${data?.patient_id}/inr-cycle`, data);
   },
   async mutateWarfarinDosage(data: InrWarfarinDosageRequestType) {
     return (await $axios.post("inr-result-dosage-next-date", data)).data;
@@ -42,11 +45,9 @@ export const calendarApi = {
     ...data
   }: {
     patientId: string;
-    data: {
-      id?: number;
-      date: string;
-      dosage: number;
-    };
+    id?: number;
+    date: string;
+    dosage: number;
   }) {
     return (
       await $axios.post(`patients/${patientId}/inr-warfarin-calendar`, data)

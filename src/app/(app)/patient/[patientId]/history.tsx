@@ -1,5 +1,6 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
 import { SuccessIcon } from "@/components/svg-components/success-icon";
 import { TrashIcon } from "@/components/svg-components/trash-icon";
@@ -8,9 +9,11 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { SuccessModal } from "@/components/ui/SuccessModal";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { useDeletePatientInr } from "@/hooks/inr-norm/useDeletePatientInr.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
 import { useGetPatientInr } from "@/hooks/inr-norm/useGetPatientInr.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import type { InrType, PatientInrType } from "@/types/inr-types";
 import dayjs from "dayjs";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -33,6 +36,10 @@ export default function PatientInrHistoryScreen() {
     created === "1" ? HY.inrAddedSuccess : null,
   );
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const canDeleteInr = useCan(
+    "DELETE",
+    ApiPaths.patientInrItem(patientId ?? "{patientId}"),
+  );
 
   const {
     inrPatentData,
@@ -108,7 +115,8 @@ export default function PatientInrHistoryScreen() {
         {isInrInNormRange(item.value) ? <SuccessIcon /> : <WarningIcon />}
       </View>
 
-      {variables?.inrId === item.id && isDeletingPatientInr ? (
+      {canDeleteInr ? (
+        variables?.inrId === item.id && isDeletingPatientInr ? (
         <ActivityIndicator size="small" color="#FF4D4F" />
       ) : (
         <Pressable
@@ -119,23 +127,29 @@ export default function PatientInrHistoryScreen() {
         >
           <TrashIcon />
         </Pressable>
-      )}
+      )
+      ) : null}
     </View>
   );
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <>
+      <PermissionGate
+        method="GET"
+        path={ApiPaths.patientInr(patientId ?? "{patientId}")}
+      >
         <LoadingScreen />
         <SuccessModal
           visible={successMessage !== null}
           title={successMessage ?? ""}
           onClose={() => setSuccessMessage(null)}
         />
-      </>
+      </PermissionGate>
     );
+  }
 
   return (
+    <PermissionGate method="GET" path={ApiPaths.patientInr(patientId ?? "{patientId}")}>
     <AuthenticatedScreen contentClassName="flex-1">
       <ScrollView
         className="flex-1"
@@ -187,5 +201,6 @@ export default function PatientInrHistoryScreen() {
         onCancel={() => setDeleteTargetId(null)}
       />
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

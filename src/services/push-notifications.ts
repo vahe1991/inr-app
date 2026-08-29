@@ -10,6 +10,17 @@ Notifications.setNotificationHandler({
   }),
 });
 
+export async function getDevicePushToken(): Promise<string | null> {
+  if (Platform.OS === "web") return null;
+
+  try {
+    const token = await Notifications.getDevicePushTokenAsync();
+    return typeof token.data === "string" ? token.data : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function registerForPushNotifications(): Promise<string | null> {
   if (Platform.OS === "web") return null;
 
@@ -30,13 +41,9 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
   if (status !== "granted") return null;
 
-  try {
-    const token = await Notifications.getDevicePushTokenAsync();
-    return typeof token.data === "string" ? token.data : null;
-  } catch (error) {
-    if (__DEV__) {
-      console.warn("FCM token unavailable until a native rebuild", error);
-    }
-    return null;
+  const token = await getDevicePushToken();
+  if (!token && __DEV__) {
+    console.warn("FCM token unavailable until a native rebuild");
   }
+  return token;
 }

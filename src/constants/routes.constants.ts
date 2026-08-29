@@ -27,8 +27,12 @@ export const INRAppRoutes = {
     `/patient/${patientId}/daily-notes-calendar?mode=${mode || "dose"}` as const,
   patientYearCalendar: (patientId: string | number) =>
     `/patient/${patientId}/year-calendar` as const,
-  patientSavedCycles: (patientId: string | number, from?: string) =>
-    `/patient/${patientId}/saved-cycles?from=${from || ""}` as const,
+  patientSavedCycles: (
+    patientId: string | number,
+    from?: string,
+    doctorId?: string | number,
+  ) =>
+    `/patient/${patientId}/saved-cycles?from=${from || ""}&doctorId=${doctorId ?? ""}` as const,
   patientAdvice: (patientId: string | number) =>
     `/patient/${patientId}/advice` as const,
   patientAdviceForm: (patientId: string | number) =>

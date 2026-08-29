@@ -1,15 +1,18 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { CalendarBtnIcon } from "@/components/svg-components/calendar-icon";
 import { Button } from "@/components/ui/Button";
 import { FormDateField } from "@/components/ui/FormDateField";
 import { FormTextField } from "@/components/ui/FormTextField";
 import { SuccessModal } from "@/components/ui/SuccessModal";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
 import { useMutateInrWarfarinDosage } from "@/hooks/calendar/useMutateInrWarfarinDosage.hook";
 import { useGetPatientAllInr } from "@/hooks/inr-norm/useGetPatientAllInr.hook";
 import { usePatientById } from "@/hooks/patient/useGetPatientById.hook";
+import { useCan } from "@/hooks/usePermission.hook";
 import type { InrWarfarinCalendarItem } from "@/types/calendar-types";
 import dayjs from "dayjs";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -80,6 +83,7 @@ export default function PatientDailyNotesCalendarScreen() {
       void refetch();
       setSuccessOpen(true);
     });
+  const canSave = useCan("POST", ApiPaths.inrResultDosageNextDate);
 
   useFocusEffect(
     useCallback(() => {
@@ -160,6 +164,11 @@ export default function PatientDailyNotesCalendarScreen() {
       return;
     }
 
+    if (!selected) {
+      Alert.alert(HY.error, HY.requiredDate);
+      return;
+    }
+
     mutateInrWarfarinDosage({
       id: editing?.id || undefined,
       patient_id: patientId,
@@ -173,6 +182,10 @@ export default function PatientDailyNotesCalendarScreen() {
   };
 
   return (
+    <PermissionGate
+      method="GET"
+      path={ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <KeyboardAvoidingView
         className="flex-1"
@@ -283,11 +296,16 @@ export default function PatientDailyNotesCalendarScreen() {
               <FormTextField
                 control={control}
                 name="inrResult"
+                editable={canSave}
                 rules={{
-                  required: HY.requiredInrValue,
-                  validate: (raw) =>
-                    (!Number.isNaN(Number(raw)) && Number(raw) > 0) ||
-                    HY.invalidInr,
+                  validate: (raw) => {
+                    const value = String(raw ?? "").trim();
+                    if (!value) return true;
+                    const num = Number(value);
+                    return (
+                      (!Number.isNaN(num) && num > 0) || HY.invalidInr
+                    );
+                  },
                 }}
                 label={HY.enterInrValue}
                 keyboardType="decimal-pad"
@@ -295,11 +313,17 @@ export default function PatientDailyNotesCalendarScreen() {
               <FormTextField
                 control={control}
                 name="dose"
+                editable={canSave}
                 rules={{
-                  required: HY.requiredField,
-                  validate: (raw) =>
-                    (!Number.isNaN(Number(raw)) && Number(raw) >= 0) ||
-                    HY.invalidDose,
+                  required: mode === "dose" ? HY.requiredField : false,
+                  validate: (raw) => {
+                    const value = String(raw ?? "").trim();
+                    if (!value) return mode === "dose" ? HY.requiredField : true;
+                    return (
+                      (!Number.isNaN(Number(value)) && Number(value) >= 0) ||
+                      HY.invalidDose
+                    );
+                  },
                 }}
                 label={HY.doseMg}
                 keyboardType="decimal-pad"
@@ -307,11 +331,16 @@ export default function PatientDailyNotesCalendarScreen() {
               <FormDateField
                 control={control}
                 name="nextTest"
+                disabled={!canSave}
                 rules={{
-                  required: HY.requiredDate,
-                  validate: (raw) =>
-                    !dayjs(raw).isBefore(dayjs(), "day") ||
-                    HY.dateNotBeforeToday,
+                  required: mode === "test" ? HY.requiredDate : false,
+                  validate: (raw) => {
+                    if (!raw) return mode === "test" ? HY.requiredDate : true;
+                    return (
+                      !dayjs(raw).isBefore(dayjs(), "day") ||
+                      HY.dateNotBeforeToday
+                    );
+                  },
                 }}
                 minimumDate={dayjs().startOf("day").toDate()}
                 valueFormat="YYYY-MM-DD"
@@ -319,11 +348,13 @@ export default function PatientDailyNotesCalendarScreen() {
                 displayFormat="DD.MM.YYYY"
                 placeholder={HY.notScheduled}
               />
-              <Button
-                title={HY.save}
-                onPress={handleSubmit(onSave)}
-                loading={isPending}
-              />
+              {canSave ? (
+                <Button
+                  title={HY.save}
+                  onPress={handleSubmit(onSave)}
+                  loading={isPending}
+                />
+              ) : null}
             </View>
           </ScrollView>
         </View>
@@ -339,5 +370,6 @@ export default function PatientDailyNotesCalendarScreen() {
         }}
       />
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

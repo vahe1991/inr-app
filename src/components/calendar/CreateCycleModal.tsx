@@ -1,10 +1,15 @@
 import { MonthCalendarGrid } from "@/components/calendar/MonthCalendarGrid";
 import { MonthPickerSheet } from "@/components/calendar/MonthPickerSheet";
+import { CloseIcon } from "@/components/svg-components/close-icon";
+import { WarningFillIcon } from "@/components/svg-components/warning-fill-icon";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { ApiPaths } from "@/constants/apiPaths";
 import { HY } from "@/constants/hy";
 import type { SavedCycleDay } from "@/helpers/calendarItems";
+import { useCan } from "@/hooks/usePermission.hook";
 import dayjs, { type Dayjs } from "dayjs";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -32,9 +37,11 @@ function formatDose(value: number) {
 function CycleDoseField({
   value,
   onChange,
+  readOnly = false,
 }: {
   value: number;
   onChange: (next: number) => void;
+  readOnly?: boolean;
 }) {
   const [text, setText] = useState(formatDose(value));
   const [focused, setFocused] = useState(false);
@@ -55,16 +62,13 @@ function CycleDoseField({
   };
 
   return (
-    <View className="flex-row items-center overflow-hidden rounded-[12px] border border-brand-200 bg-white">
-      <Pressable
-        onPress={() => onChange(roundDose(value - STEP))}
-        className="h-10 w-10 items-center justify-center bg-brand-50"
-        accessibilityLabel="−"
-      >
-        <Text className="text-[20px] text-calendar-primary">−</Text>
-      </Pressable>
+    <View
+      className="h-[38px] max-w-[70px] min-w-0 flex-1 flex-row items-center justify-center overflow-hidden rounded-l-lg border border-brand-200 bg-white px-1"
+      style={{ borderTopLeftRadius: 8, borderBottomLeftRadius: 8 }}
+    >
       <TextInput
         value={focused ? text : formatDose(value)}
+        editable={!readOnly}
         onChangeText={applyText}
         onFocus={() => {
           setFocused(true);
@@ -81,16 +85,11 @@ function CycleDoseField({
         }}
         keyboardType="decimal-pad"
         selectTextOnFocus
-        className="h-10 min-w-[52px] flex-1 px-1 text-center font-medium text-[15px] text-calendar-primary"
+        className="min-w-0 flex-1 px-1 py-0 text-center font-semibold text-[16px] text-grey-900"
       />
-      <Text className="pr-1 text-[12px] text-grey-400">{HY.mg}</Text>
-      <Pressable
-        onPress={() => onChange(roundDose(value + STEP))}
-        className="h-10 w-10 items-center justify-center bg-brand-50"
-        accessibilityLabel="+"
-      >
-        <Text className="text-[20px] text-calendar-primary">+</Text>
-      </Pressable>
+      <Text className="shrink-0 font-semibold text-[16px] text-calendar-primary">
+        {HY.mg}
+      </Text>
     </View>
   );
 }
@@ -100,6 +99,12 @@ type CreateCycleModalProps = {
   month: Dayjs;
   onChangeMonth: (month: Dayjs) => void;
   loading?: boolean;
+  initialDays?: SavedCycleDay[];
+  initialName?: string;
+  lockName?: boolean;
+  hideSave?: boolean;
+  hideApply?: boolean;
+  cancelLabel?: string;
   onClose: () => void;
   onApply: (days: SavedCycleDay[]) => void;
   onSave: (name: string, days: SavedCycleDay[]) => void;
@@ -122,10 +127,26 @@ export function CreateCycleModal({
   month,
   onChangeMonth,
   loading,
+  initialDays,
+  initialName,
+  lockName,
+  hideSave,
+  hideApply,
+  cancelLabel = HY.cancel,
   onClose,
   onApply,
   onSave,
 }: CreateCycleModalProps) {
+  const { patientId } = useLocalSearchParams<{ patientId: string }>();
+  const canSaveCycle = useCan(
+    "POST",
+    ApiPaths.patientInrCycle(patientId ?? "{patientId}"),
+  );
+  const canApplyCycle = useCan(
+    "POST",
+    ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}"),
+  );
+  const canWriteCycle = canSaveCycle || canApplyCycle;
   const [days, setDays] = useState<SavedCycleDay[]>([]);
   const [nameOpen, setNameOpen] = useState(false);
   const [name, setName] = useState("");
@@ -147,7 +168,12 @@ export function CreateCycleModal({
       setName("");
       setDragging(false);
       setMonthPickerOpen(false);
+      return;
     }
+    setDays(sortDays(initialDays ?? []));
+    setName(initialName ?? "");
+    // Only re-seed when the modal opens, not while the user edits days.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed from props at open
   }, [visible]);
 
   const marks = useMemo(() => {
@@ -199,38 +225,36 @@ export function CreateCycleModal({
       >
         <View className="flex-1 justify-end">
           <Pressable
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0  bg-black/40"
             onPress={onClose}
             accessibilityLabel={HY.cancel}
           />
           <KeyboardAvoidingView
+            className="flex-1 justify-end"
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <View
-              className="max-h-[92%] rounded-t-[24px] bg-white px-4 pt-3"
-              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
-            >
+            <View className="h-[92%] w-full rounded-t-[24px] bg-white px-4 pt-3">
               <View className="mb-3 items-center">
                 <View className="h-1 w-12 rounded-full bg-brand-200" />
               </View>
-              <View className="mb-3 flex-row items-center justify-between">
+              <View className="mb-[16px] flex-row items-center justify-between">
                 <Text className="font-semibold text-[18px] text-calendar-primary">
-                  {HY.createDosageCycle}
+                  {lockName ? HY.editCycle : HY.createDosageCycle}
                 </Text>
                 <Pressable
                   onPress={onClose}
-                  className="h-8 w-8 items-center justify-center rounded-lg bg-brand-100"
+                  className="h-[44px] w-[44px] items-center justify-center rounded-lg bg-brand-100"
                 >
-                  <Text className="text-[16px] text-calendar-primary">×</Text>
+                  <CloseIcon size={24} />
                 </Pressable>
               </View>
 
               <ScrollView
+                className="flex-1"
                 showsVerticalScrollIndicator={false}
                 scrollEnabled={!dragging}
                 keyboardShouldPersistTaps="handled"
                 automaticallyAdjustKeyboardInsets
-                style={{ flexGrow: 0, flexShrink: 1 }}
               >
                 <MonthCalendarGrid
                   month={month}
@@ -238,17 +262,21 @@ export function CreateCycleModal({
                   onPrev={() => onChangeMonth(month.subtract(1, "month"))}
                   onNext={() => onChangeMonth(month.add(1, "month"))}
                   onPressTitle={() => setMonthPickerOpen(true)}
-                  onSelectDay={onSelectDay}
-                  onSelectRange={onSelectRange}
-                  onDragStateChange={(isDragging) => {
-                    if (isDragging) daysBeforeDrag.current = days;
-                    setDragging(isDragging);
-                  }}
+                  onSelectDay={canWriteCycle ? onSelectDay : undefined}
+                  onSelectRange={canWriteCycle ? onSelectRange : undefined}
+                  onDragStateChange={
+                    canWriteCycle
+                      ? (isDragging) => {
+                          if (isDragging) daysBeforeDrag.current = days;
+                          setDragging(isDragging);
+                        }
+                      : undefined
+                  }
                 />
 
-                <View className="mt-3 flex-row gap-2 rounded-[12px] bg-brand-50 p-3">
-                  <Text className="text-[14px] text-calendar-primary">i</Text>
-                  <Text className="min-w-0 flex-1 text-[12px] leading-5 text-grey-900">
+                <View className="mt-3 flex-row items-center gap-2 rounded-[12px] bg-brand-50 p-3">
+                  <WarningFillIcon color="#6A4A98" />
+                  <Text className="min-w-0 flex-1 text-[14px] leading-5 text-grey-900">
                     {days.length ? HY.defaultDoseHint : HY.selectDateRangeHint}
                   </Text>
                 </View>
@@ -263,68 +291,88 @@ export function CreateCycleModal({
                       return (
                         <View
                           key={item.date}
-                          className="mb-2 rounded-[12px] bg-brand-50 px-3 py-3"
+                          className="mb-2 rounded-[8px] bg-brand-100 px-3 py-3 flex-row items-start justify-between border-[0.5px] border-brand-600"
                         >
-                          <View className="mb-2 flex-row items-start justify-between">
-                            <View className="min-w-0 flex-1 pr-3">
-                              <Text className="text-[14px] text-grey-900">
-                                {HY.weekdaysLong[parsed.day()]},{" "}
-                                {HY.months[parsed.month()]} {parsed.date()},{" "}
-                                {parsed.year()}
-                              </Text>
-                              <Text className="text-[12px] text-grey-400">
-                                {HY.dayN} {index + 1}
-                              </Text>
-                            </View>
-                            <Pressable
-                              onPress={() =>
-                                setDays((current) =>
-                                  current.filter(
-                                    (day) => day.date !== item.date,
-                                  ),
-                                )
-                              }
-                              className="h-9 w-9 items-center justify-center rounded-lg bg-white"
-                            >
-                              <Text className="text-[18px] text-calendar-danger">
-                                ×
-                              </Text>
-                            </Pressable>
+                          <View className="min-w-0 flex-1">
+                            <Text className="text-[13px] text-grey-900">
+                              {HY.weekdaysLong[parsed.day()]},{" "}
+                              {HY.months[parsed.month()]} {parsed.date()},{" "}
+                              {parsed.year()}
+                            </Text>
+                            <Text className="text-[12px] text-grey-400">
+                              {HY.dayN} {index + 1}
+                            </Text>
                           </View>
-                          <CycleDoseField
-                            value={item.dosage}
-                            onChange={(dosage) => setDayDose(item.date, dosage)}
-                          />
+                          <View className="flex-row items-center">
+                            <CycleDoseField
+                              value={item.dosage}
+                              readOnly={!canWriteCycle}
+                              onChange={(dosage) =>
+                                setDayDose(item.date, dosage)
+                              }
+                            />
+                            {canWriteCycle ? (
+                              <Pressable
+                                onPress={() =>
+                                  setDays((current) =>
+                                    current.filter(
+                                      (day) => day.date !== item.date,
+                                    ),
+                                  )
+                                }
+                                className="h-[35px] w-9 items-center justify-center rounded-r-lg bg-white"
+                              >
+                                <CloseIcon color="#FF4D4F" />
+                              </Pressable>
+                            ) : null}
+                          </View>
                         </View>
                       );
                     })}
-                    <View className="mt-2">
-                      <Button
-                        title={HY.saveCycle}
-                        variant="outline"
-                        onPress={() => setNameOpen(true)}
-                      />
-                    </View>
                   </View>
                 ) : null}
               </ScrollView>
 
               <View
-                className="mt-3 flex-row items-center justify-between gap-3"
-                style={{ flexShrink: 0 }}
+                className="mt-3 gap-3"
+                style={{
+                  flexShrink: 0,
+                  paddingBottom: Math.max(insets.bottom, 12),
+                }}
               >
-                <Pressable onPress={onClose} className="px-2 py-3">
-                  <Text className="font-medium text-[14px] text-calendar-primary">
-                    {HY.cancel}
-                  </Text>
-                </Pressable>
-                <View className="min-w-[160px]">
+                {days.length && canSaveCycle && !hideSave && !lockName ? (
                   <Button
-                    title={HY.applyDosage}
-                    disabled={!days.length}
-                    loading={loading}
-                    onPress={() => onApply(days)}
+                    title={HY.saveCycle}
+                    variant="outline"
+                    onPress={() => setNameOpen(true)}
                   />
+                ) : null}
+                <View className="flex-row items-center justify-end gap-3">
+                  <Button
+                    fullWidth={false}
+                    title={cancelLabel}
+                    variant="ghost"
+                    onPress={onClose}
+                  />
+                  {lockName && canSaveCycle ? (
+                    <Button
+                      fullWidth={false}
+                      title={HY.editCycle}
+                      disabled={!days.length}
+                      loading={loading}
+                      onPress={() =>
+                        onSave(initialName?.trim() || name.trim(), days)
+                      }
+                    />
+                  ) : canApplyCycle && !hideApply ? (
+                    <Button
+                      fullWidth={false}
+                      title={HY.applyDosage}
+                      disabled={!days.length}
+                      loading={loading}
+                      onPress={() => onApply(days)}
+                    />
+                  ) : null}
                 </View>
               </View>
             </View>
@@ -357,8 +405,9 @@ export function CreateCycleModal({
               {HY.enterCycleName}
             </Text>
             <TextField
-              placeholder={HY.cycleNamePlaceholder}
+              placeholder={HY.saveCycle}
               value={name}
+              editable={canSaveCycle}
               onChangeText={setName}
             />
             <View className="mt-4 flex-row gap-3">
@@ -370,15 +419,14 @@ export function CreateCycleModal({
                 />
               </View>
               <View className="flex-1">
-                <Button
-                  title={HY.save}
-                  disabled={!name.trim()}
-                  loading={loading}
-                  onPress={() => {
-                    onSave(name.trim(), days);
-                    setNameOpen(false);
-                  }}
-                />
+                {canSaveCycle ? (
+                  <Button
+                    title={HY.save}
+                    disabled={!name.trim()}
+                    loading={loading}
+                    onPress={() => onSave(name.trim(), days)}
+                  />
+                ) : null}
               </View>
             </View>
           </Pressable>

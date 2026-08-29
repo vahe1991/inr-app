@@ -1,11 +1,15 @@
 import type { SvgProps } from "react-native-svg";
 import Svg, { ClipPath, Defs, G, Path, Rect } from "react-native-svg";
-export const WarningFillIcon = (props: SvgProps) => (
-  <Svg width={18} height={18} viewBox="0 0 18 18" fill="none" {...props}>
+export const WarningFillIcon = ({
+  size = 18,
+  color = "#FF4D4F",
+  ...props
+}: SvgProps & { size?: number; color?: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 18 18" fill="none" {...props}>
     <G clipPath="url(#clip0_963_3941)">
       <Path
         d="M9 0C4.02991 0 0 4.02991 0 9C0 13.9701 4.02991 18 9 18C13.9701 18 18 13.9701 18 9C18 4.02991 13.9701 0 9 0Z"
-        fill="#FF4D4F"
+        fill={color}
       />
       <Path
         d="M8.03613 12.5357C8.03613 12.7915 8.13773 13.0367 8.31857 13.2176C8.4994 13.3984 8.74467 13.5 9.00042 13.5C9.25616 13.5 9.50143 13.3984 9.68227 13.2176C9.86311 13.0367 9.9647 12.7915 9.9647 12.5357C9.9647 12.28 9.86311 12.0347 9.68227 11.8539C9.50143 11.673 9.25616 11.5714 9.00042 11.5714C8.74467 11.5714 8.4994 11.673 8.31857 11.8539C8.13773 12.0347 8.03613 12.28 8.03613 12.5357ZM8.51828 10.2857H9.48256C9.57095 10.2857 9.64328 10.2134 9.64328 10.125V4.66071C9.64328 4.57232 9.57095 4.5 9.48256 4.5H8.51828C8.42988 4.5 8.35756 4.57232 8.35756 4.66071V10.125C8.35756 10.2134 8.42988 10.2857 8.51828 10.2857Z"

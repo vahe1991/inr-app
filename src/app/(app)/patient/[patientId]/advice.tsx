@@ -1,11 +1,14 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { Permission } from "@/components/permission/Permission";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { AdviceBtnIcon } from "@/components/svg-components/advice-icon";
 import { EditIcon } from "@/components/svg-components/edit-icon";
 import { PlasCircle } from "@/components/svg-components/plas-circle";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { jsonParsed } from "@/helpers/jsonParsed";
 import { useGetPatentInrAdvice } from "@/hooks/inr-norm/useGetPatentInrAdvice.hook";
@@ -76,6 +79,7 @@ export default function AdviceScreen() {
   const previous = sorted.filter((item) => item.id !== actual?.id);
 
   const editButton = (item: InrAdviceType) => (
+    <Permission method="POST" path={ApiPaths.patientInrAdvice(patientId ?? "{patientId}")}>
     <Pressable
       onPress={() => openForm(item.id)}
       hitSlop={8}
@@ -85,9 +89,11 @@ export default function AdviceScreen() {
     >
       <EditIcon />
     </Pressable>
+    </Permission>
   );
 
   return (
+    <PermissionGate method="GET" path={ApiPaths.patientInrAdvice(patientId ?? "{patientId}")}>
     <AuthenticatedScreen contentClassName="flex-1">
       <View className="flex-1">
         <ScrollView
@@ -153,11 +159,13 @@ export default function AdviceScreen() {
         </ScrollView>
 
         <View className="gap-2 px-4 pb-2 pt-3">
+          <Permission method="POST" path={ApiPaths.patientInrAdvice(patientId ?? "{patientId}")}>
           <Button
             title={HY.addNewAdvice}
             onPress={() => openForm()}
             icon={(color) => <PlasCircle color={color} />}
           />
+          </Permission>
           <Button
             title={HY.backToMain}
             variant="outline"
@@ -168,5 +176,6 @@ export default function AdviceScreen() {
         </View>
       </View>
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

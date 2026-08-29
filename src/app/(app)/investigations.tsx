@@ -1,5 +1,7 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { ApiPaths } from "@/constants/apiPaths";
 import { HY } from "@/constants/hy";
 import { useInrInvestigationsList } from "@/hooks/inr-norm/useGetInrInvestigationsList.hook";
 import { useRouter } from "expo-router";
@@ -19,6 +21,7 @@ export default function InvestigationsScreen() {
     useInrInvestigationsList({ page, pageSize: 20 });
 
   return (
+    <PermissionGate method="GET" path={ApiPaths.inr}>
     <AuthenticatedScreen contentClassName="flex-1 px-4 pt-4">
       <Text className="mb-3 text-xl font-semibold text-grey-900">
         {HY.labTitle}
@@ -96,5 +99,6 @@ export default function InvestigationsScreen() {
         />
       )}
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

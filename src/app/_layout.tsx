@@ -1,8 +1,10 @@
-import "react-native-gesture-handler";
 import "@/global.css";
+import "react-native-gesture-handler";
 
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { firstAllowedAppHref } from "@/helpers/permissions";
+import { queryClient } from "@/libs/queryClient";
 import {
   Montserrat_400Regular,
   Montserrat_500Medium,
@@ -10,7 +12,7 @@ import {
   Montserrat_700Bold,
   useFonts,
 } from "@expo-google-fonts/montserrat";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
@@ -45,12 +47,6 @@ function BrandSplash() {
   );
 }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 0 },
-  },
-});
-
 const AUTH_ROUTES = new Set([
   "sign-in",
   "forgot-password",
@@ -60,7 +56,7 @@ const AUTH_ROUTES = new Set([
 ]);
 
 function AuthGate({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, permissions, user } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -69,13 +65,14 @@ function AuthGate({ children }: { children: ReactNode }) {
 
     const first = String(segments[0] ?? "");
     const onAuthScreen = AUTH_ROUTES.has(first);
+    const home = firstAllowedAppHref(permissions, user);
 
     if (!isAuthenticated && !onAuthScreen) {
       router.replace("/sign-in");
     } else if (isAuthenticated && onAuthScreen) {
-      router.replace("/(app)/patients");
+      router.replace(home as never);
     }
-  }, [isAuthenticated, segments, router]);
+  }, [isAuthenticated, permissions, user, segments, router]);
 
   if (isAuthenticated === null) {
     return <LoadingScreen />;

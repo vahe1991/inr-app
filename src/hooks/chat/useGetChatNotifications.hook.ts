@@ -1,11 +1,14 @@
 import { asChatInboxPage } from "@/helpers/chatPayload";
+import { ApiPaths } from "@/constants/apiPaths";
 import { chatKeys } from "@/hooks/chat/keys";
+import { useCan } from "@/hooks/usePermission.hook";
 import { chatApi } from "@/services/chat";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 const PAGE_SIZE = 20;
 
 export const useGetChatNotifications = () => {
+  const allowed = useCan("GET", ApiPaths.chatNotifications);
   const query = useInfiniteQuery({
     queryKey: chatKeys.notifications,
     queryFn: async ({ pageParam }) =>
@@ -24,6 +27,7 @@ export const useGetChatNotifications = () => {
     },
     staleTime: 0,
     refetchOnMount: "always",
+    enabled: allowed,
   });
 
   const lastPage = query.data?.pages.at(-1);

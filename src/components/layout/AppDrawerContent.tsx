@@ -1,3 +1,4 @@
+import { LegalFooter } from "@/components/layout/LegalFooter";
 import { HY } from "@/constants/hy";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -41,6 +42,7 @@ export function AppDrawerContent(props: DrawerContentComponentProps) {
       </View>
 
       <DrawerItemList {...props} />
+      <LegalFooter className="mt-auto items-start gap-3 px-4 py-4" />
     </DrawerContentScrollView>
   );
 }

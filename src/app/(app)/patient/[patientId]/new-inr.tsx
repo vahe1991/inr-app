@@ -1,5 +1,6 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
 import { Button } from "@/components/ui/Button";
 import { FormDateField } from "@/components/ui/FormDateField";
@@ -7,6 +8,7 @@ import { FormSelectField } from "@/components/ui/FormSelectField";
 import { FormTextField } from "@/components/ui/FormTextField";
 import { InrScanModal, type InrScanResult } from "@/components/ui/InrScanModal";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { useCreatePatientInr } from "@/hooks/inr-norm/useCreatePatientInr.hook";
 import { useLocations } from "@/hooks/useLocations.hook";
@@ -146,6 +148,7 @@ export default function NewInrScreen() {
   };
 
   return (
+    <PermissionGate method="POST" path={ApiPaths.patientInr(patientId ?? "{patientId}")}>
     <AuthenticatedScreen contentClassName="flex-1">
       <KeyboardAvoidingView
         className="flex-1"
@@ -315,5 +318,6 @@ export default function NewInrScreen() {
         onDetected={handleDetected}
       />
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

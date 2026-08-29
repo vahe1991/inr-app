@@ -50,8 +50,10 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
         ) : null}
 
         <View
-          className={`flex-row rounded-lg bg-white px-4 py-3 ${
+          className={`flex-row rounded-lg px-4 py-3 ${
             multiline ? "min-h-24 items-start" : "min-h-12 items-center"
+          } ${
+            editable === false ? "bg-brand-10" : "bg-white"
           } ${
             error ? "border border-calendar-danger" : "border border-brand-700"
           }`}

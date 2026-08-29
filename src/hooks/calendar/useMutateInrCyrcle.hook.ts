@@ -16,6 +16,9 @@ export const useMutateInrWarfarinDosage = (
       await queryClient.invalidateQueries({
         queryKey: ["inr-circle"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["inr-warfarin-calendar"],
+      });
       onSuccessCallback(data);
     },
     onError: (e) => {

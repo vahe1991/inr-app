@@ -5,6 +5,17 @@ import type {
   LogoutResponse,
 } from "@/types/auth-user-type";
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  email: string;
+  code: string;
+  password: string;
+  password_confirmation: string;
+}
+
 export const login = async (user: LoginPayload): Promise<LoginResponse> => {
   const { data } = await $axios.post<LoginResponse>("login", user);
 
@@ -15,8 +26,27 @@ export const login = async (user: LoginPayload): Promise<LoginResponse> => {
   return data;
 };
 
+export const forgotPassword = async (
+  payload: ForgotPasswordPayload,
+): Promise<void> => {
+  return await $axios.post("forgot-password", payload);
+};
+
+export const resetPassword = async (
+  payload: ResetPasswordPayload,
+): Promise<void> => {
+  await $axios.post("reset-password", payload);
+};
+
 export const logout = async (): Promise<LogoutResponse> => {
-  return await $axios.post("logout");
+  const { data } = await $axios.post<LogoutResponse>("logout");
+  delete $axios.defaults.headers.common.Authorization;
+  return data;
+};
+
+export const deleteAccount = async (): Promise<void> => {
+  await $axios.delete("delete-account");
+  delete $axios.defaults.headers.common.Authorization;
 };
 
 export const createUser = async (user: Record<string, unknown>) => {

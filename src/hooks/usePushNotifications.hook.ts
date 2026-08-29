@@ -1,3 +1,6 @@
+import { ApiPaths } from "@/constants/apiPaths";
+import { hasPermission } from "@/helpers/permissions";
+import { storage } from "@/libs/storage";
 import { notificationApi } from "@/services/notification";
 import { registerForPushNotifications } from "@/services/push-notifications";
 import { useEffect } from "react";
@@ -9,6 +12,11 @@ export function usePushNotifications(enabled: boolean) {
     if (Platform.OS !== "android" && Platform.OS !== "ios") return;
 
     void (async () => {
+      const permissions = await storage.getPermissions();
+      if (!hasPermission(permissions, "POST", ApiPaths.devicesRegister)) {
+        return;
+      }
+
       const token = await registerForPushNotifications();
       if (!token) return;
 

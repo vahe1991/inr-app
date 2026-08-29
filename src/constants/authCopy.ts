@@ -6,7 +6,7 @@ export const AUTH_COPY = {
     emailPlaceholder: "մուտքագրել էլ. հասցեն",
     passwordLabel: "Գաղտնաբառ",
     passwordPlaceholder: "Մուտքագրել գաղտնաբառը",
-    rememberMe: "Պահպանել տվյալները",
+    rememberMe: "Պահպանել էլ․ հասցեն",
     forgotPassword: "Մոռացե՞լ եք գաղտնաբառը",
     submit: "Մուտք",
     emailError: "Սխալ էլ․ հասցե",
@@ -27,7 +27,7 @@ export const AUTH_COPY = {
   checkEmail: {
     title: "ՍՏՈՒԳԵԼ ԷԼԵԿՏՐՈՆԱՅԻՆ ՀԱՍՑԵՆ",
     description:
-      "Մենք ուղարկել ենք գաղտնաբառի վերականգնման հղումը ձեր էլ․ հասցեին։ Բացեք նամակը և հետևեք ցուցումներին։",
+      "Մենք ուղարկել ենք վերականգնման կոդը ձեր էլ․ հասցեին։ Մուտքագրեք այդ կոդը հաջորդ էկրանում։",
     backToLogin: "Վերադառնալ մուտքի էջ",
   },
   resetPassword: {
@@ -40,6 +40,10 @@ export const AUTH_COPY = {
     submit: "Փոխել գաղտնաբառը",
     mismatch: "Գաղտնաբառերը չեն համընկնում",
     minLength: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ",
+    tokenLabel: "Կոդ",
+    tokenPlaceholder: "մուտքագրել կոդը",
+    requiredToken: "Կոդ դաշտը պարտադիր է",
+    invalidToken: "Մուտքագրեք վավեր կոդ",
   },
   resetSuccess: {
     title: "ԳԱՂՏՆԱԲԱՌԸ ՀԱՋՈՂՈՒԹՅԱՄԲ ՓՈԽՎԵՑ",

@@ -1,8 +1,10 @@
 import { AuthenticatedScreen } from "@/components/layout/AuthenticatedScreen";
 import { MonthCalendarGrid } from "@/components/calendar/MonthCalendarGrid";
+import { PermissionGate } from "@/components/permission/PermissionGate";
 import { ArrowLeftIcon } from "@/components/svg-components/arrow-left-icon";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { HY } from "@/constants/hy";
+import { ApiPaths } from "@/constants/apiPaths";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { asCalendarItems } from "@/helpers/calendarItems";
 import { useGetInrWarfarinCalendarDosage } from "@/hooks/calendar/useGetInrWarfarinCalendarDosage.hook";
@@ -30,10 +32,17 @@ export default function YearCalendarScreen() {
   );
 
   const marks = useMemo(() => {
-    const next: Record<string, { dot?: "purple"; dosage?: number }> = {};
+    const next: Record<string, { dot?: "purple" | "red"; dosage?: number }> =
+      {};
     asCalendarItems(calendarDosages).forEach((item) => {
       const key = dayjs(item.date).format("YYYY-MM-DD");
       next[key] = { dot: "purple", dosage: item.dosage };
+    });
+    (calendarDosages?.nextTestGiveDates ?? []).forEach((item) => {
+      const raw = item.date || item.visitDate;
+      if (!raw) return;
+      const key = dayjs(raw).format("YYYY-MM-DD");
+      next[key] = { ...next[key], dot: "red" };
     });
     return next;
   }, [calendarDosages]);
@@ -42,6 +51,10 @@ export default function YearCalendarScreen() {
   const currentYear = dayjs().year();
 
   return (
+    <PermissionGate
+      method="GET"
+      path={ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}")}
+    >
     <AuthenticatedScreen contentClassName="flex-1">
       <ScrollView
         className="flex-1"
@@ -105,5 +118,6 @@ export default function YearCalendarScreen() {
         </View>
       </ScrollView>
     </AuthenticatedScreen>
+    </PermissionGate>
   );
 }

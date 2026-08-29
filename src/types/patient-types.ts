@@ -38,9 +38,9 @@ export type PatientResponse = {
 };
 
 export interface PatientsSearchType {
-  page?: number;
-  pageSize?: number;
-  search?: string;
+  page?: number | null;
+  pageSize?: number | null;
+  name?: string | null;
 }
 
 export interface PatientType {

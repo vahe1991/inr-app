@@ -2,10 +2,16 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 
 /** Rounded tinted square used behind screen-header icons. */
-export function IconBadge({ children }: { children: ReactNode }) {
+export function IconBadge({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <View
-      className="h-10 w-10 items-center justify-center rounded-lg bg-[#ede7f6]"
+      className={`h-10 w-10 items-center justify-center rounded-lg  ${className || "bg-[#ede7f6]"}`}
       style={{
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
