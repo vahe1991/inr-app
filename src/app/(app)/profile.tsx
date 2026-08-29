@@ -4,11 +4,12 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { HY } from "@/constants/hy";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 
 export default function ProfileScreen() {
   const { email, name, logOut, deleteAccount } = useAuth();
   const [delet, setDelete] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState(false);
   return (
     <AuthenticatedScreen contentClassName="flex-1 px-4 pt-6">
       <Text className="mb-4 text-xl font-semibold text-grey-900">
@@ -39,9 +40,22 @@ export default function ProfileScreen() {
         subInfo={HY.deleteAccountHint}
         confirmLabel={HY.delete}
         destructive
-        onCancel={() => setDelete(false)}
+        loading={deleting}
+        onCancel={() => {
+          if (!deleting) setDelete(false);
+        }}
         onConfirm={() => {
-          void deleteAccount();
+          void (async () => {
+            setDeleting(true);
+            try {
+              await deleteAccount();
+              setDelete(false);
+            } catch {
+              Alert.alert(HY.error, HY.deleteAccountFailed);
+            } finally {
+              setDeleting(false);
+            }
+          })();
         }}
       />
     </AuthenticatedScreen>

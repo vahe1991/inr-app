@@ -1,5 +1,8 @@
 import { userIdFromToken } from "@/helpers/authToken";
-import { clearClientSession } from "@/helpers/clearClientSession";
+import {
+  clearClientSession,
+  unregisterPushDevice,
+} from "@/helpers/clearClientSession";
 import { firstAllowedAppHref } from "@/helpers/permissions";
 import { subscribeStoredSessionCleared } from "@/libs/session";
 import { storage } from "@/libs/storage";
@@ -110,10 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [resetLocalAuth]);
 
   const deleteAccount = useCallback(async () => {
-    await clearClientSession({
-      remote: deleteAccountService,
-      forgetRememberedEmail: true,
-    });
+    try {
+      await unregisterPushDevice();
+    } catch {
+      /* still attempt server deletion */
+    }
+    await deleteAccountService();
+    await clearClientSession({ forgetRememberedEmail: true });
     resetLocalAuth();
   }, [resetLocalAuth]);
 

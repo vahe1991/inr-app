@@ -22,6 +22,17 @@ NMBK is a record-keeping app for Nork-Marash Medical Center clinicians and patie
 
 Medical disclaimer: this app does not diagnose, prescribe, or replace professional medical advice. Treatment decisions must be made with a licensed clinician. Do not change medication without your doctor's approval.
 
+## Play Data safety — account deletion
+
+- Account deletion is available in-app: Profile → Ջնջել հաշիվը.
+- Web deletion / request URL (public, no app install required): https://inr.xlab.am/privacy-policy
+- Contact: info@nmmc.am
+- Closing the app login does not erase the medical record. INR results, dosage, and treatment history may be retained as a medical document as required by law.
+
+## Privacy policy §15 — add this sentence on the live page
+
+Հավելվածում հաշիվը կարող եք փակել նաև Պրոֆիլ էջի «Ջնջել հաշիվը» կոճակով։ Դա փակում է մուտքի հաշիվը։ Բժշկական փաստաթուղթը կարող է պահպանվել օրենքով։ Նույն հայտը կարող եք ուղարկել նաև info@nmmc.am հասցեին։
+
 ## Review notes
 
 - Intended users: treating physicians and enrolled patients of the clinic.
