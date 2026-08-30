@@ -16,8 +16,7 @@ export const ApiPaths = {
   notificationsRead: "api/notifications/read",
   notificationsReadAll: "api/notifications/read-all",
   notificationsUnreadCount: "api/notifications/unread-count",
-  notificationItem: (id: string | number = "{id}") =>
-    `api/notifications/${id}`,
+  notificationItem: (id: string | number = "{id}") => `api/notifications/${id}`,
   patients: "api/patients",
   patient: (id: string | number = "{id}") => `api/patients/${id}`,
   patientChatMessages: (patientId: string | number = "{patientId}") =>
@@ -37,6 +36,8 @@ export const ApiPaths = {
   patientInrComplication: (patientId: string | number = "{patientId}") =>
     `api/patients/${patientId}/inr-complication`,
   patientInrCycle: (patientId: string | number = "{patientId}") =>
+    `api/patients/${patientId}/inr-cycle`,
+  patientDeleteInrCycle: (patientId: string | number = "{patientId}") =>
     `api/patients/${patientId}/inr-cycle`,
   patientInrNorm: (patientId: string | number = "{patientId}") =>
     `api/patients/${patientId}/inr-norm`,

@@ -37,6 +37,15 @@ export const calendarApi = {
   async mutateInrCycle(data: MutateInrCycleRequestType) {
     return await $axios.post(`patients/${data?.patient_id}/inr-cycle`, data);
   },
+  async deleteInrCycle({
+    doctorId,
+    cycleId,
+  }: {
+    doctorId: string;
+    cycleId: string | number;
+  }) {
+    return await $axios.delete(`patients/${doctorId}/inr-cycle/${cycleId}`);
+  },
   async mutateWarfarinDosage(data: InrWarfarinDosageRequestType) {
     return (await $axios.post("inr-result-dosage-next-date", data)).data;
   },

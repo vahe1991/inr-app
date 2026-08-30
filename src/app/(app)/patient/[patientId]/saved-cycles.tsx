@@ -3,18 +3,20 @@ import { PatientSubHeader } from "@/components/patient/PatientSubHeader";
 import { PermissionGate } from "@/components/permission/PermissionGate";
 import { SavedCycleCard } from "@/components/saved-cycles/SavedCycleCard";
 import { HeartBtnIcon } from "@/components/svg-components/heart-btn-icon";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { ApiPaths } from "@/constants/apiPaths";
 import { HY } from "@/constants/hy";
 import { INRAppRoutes } from "@/constants/routes.constants";
 import { shiftCycleDaysToStart } from "@/helpers/calendarItems";
 import { setCycleDraft } from "@/helpers/cycleDraft";
+import { useDeleteInrCycle } from "@/hooks/calendar/useDeleteCycle";
 import { useGetInrCircle } from "@/hooks/calendar/useGetInrCircle.hook";
 import { useCan } from "@/hooks/usePermission.hook";
 import type { InrCycleData } from "@/types/calendar-types";
 import dayjs from "dayjs";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ScrollView, Text } from "react-native";
 
 type InrCycle = InrCycleData["cycles"][number];
@@ -26,11 +28,15 @@ export default function SavedCyclesScreen() {
     doctorId: string;
     from?: string;
   }>();
-  // const [pendingDelete, setPendingDelete] = useState<InrCycle | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<InrCycle | null>(null);
 
   const { inrCircle, isLoadingInrCircle, refetch } = useGetInrCircle({
     doctor_id: doctorId ?? "",
   });
+  const { mutate: deleteInrCycle, isPending: isDeletingInrCycle } =
+    useDeleteInrCycle(() => {
+      setPendingDelete(null);
+    });
   const canApply = useCan(
     "POST",
     ApiPaths.patientWarfarinCalendar(patientId ?? "{patientId}"),
@@ -38,6 +44,13 @@ export default function SavedCyclesScreen() {
   const canEditCycle = useCan(
     "POST",
     ApiPaths.patientInrCycle(patientId ?? "{patientId}"),
+  );
+  const canDeleteCycle = useCan(
+    "DELETE",
+    ApiPaths.patientDeleteInrCycle(
+      doctorId ?? "{doctorId}",
+      pendingDelete?.id ?? "{cycleId}",
+    ),
   );
 
   useFocusEffect(
@@ -98,15 +111,16 @@ export default function SavedCyclesScreen() {
                 cycle={cycle}
                 canApply={canApply}
                 canEditCycle={canEditCycle}
+                canDeleteCycle={canDeleteCycle}
                 onApply={(item) => openCycleOnCalendar(item, "apply")}
                 onEdit={(item) => openCycleOnCalendar(item, "edit")}
-                // onDelete={setPendingDelete}
+                onDelete={(cycle) => setPendingDelete(cycle)}
               />
             ))
           )}
         </ScrollView>
 
-        {/* <ConfirmModal
+        <ConfirmModal
           visible={Boolean(pendingDelete)}
           title={HY.deleteCycle}
           description={HY.deleteCycleConfirm}
@@ -115,10 +129,13 @@ export default function SavedCyclesScreen() {
           destructive
           onCancel={() => setPendingDelete(null)}
           onConfirm={() => {
-            Alert.alert(HY.comingSoon);
-            setPendingDelete(null);
+            deleteInrCycle({
+              doctorId: doctorId ?? "",
+              cycleId: pendingDelete?.id ?? "",
+            });
           }}
-        /> */}
+          loading={isDeletingInrCycle}
+        />
       </AuthenticatedScreen>
     </PermissionGate>
   );
