@@ -1,3 +1,4 @@
+import { TrashBrandIcon } from "@/components/svg-components/trash-icon";
 import { HY } from "@/constants/hy";
 import type { InrCycleData } from "@/types/calendar-types";
 import dayjs from "dayjs";
@@ -9,16 +10,18 @@ export function SavedCycleCard({
   cycle,
   canApply,
   canEditCycle,
+  canDeleteCycle,
   onApply,
   onEdit,
-  // onDelete,
+  onDelete,
 }: {
   cycle: InrCycle;
   canApply: boolean;
   canEditCycle: boolean;
+  canDeleteCycle: boolean;
   onApply: (cycle: InrCycle) => void;
   onEdit: (cycle: InrCycle) => void;
-  // onDelete: (cycle: InrCycle) => void;
+  onDelete: (cycle: InrCycle) => void;
 }) {
   return (
     <View className="mb-3">
@@ -30,12 +33,26 @@ export function SavedCycleCard({
           hitSlop={8}
           disabled={!canEditCycle}
           onPress={() => onEdit(cycle)}
+          className={
+            !canEditCycle
+              ? "opacity-50 pointer-events-none"
+              : "active:opacity-80"
+          }
         >
           <EditBrandIcon />
         </Pressable>
-        {/* <Pressable hitSlop={8} onPress={() => onDelete(cycle)}>
+        <Pressable
+          hitSlop={8}
+          disabled={!canDeleteCycle}
+          onPress={() => onDelete(cycle)}
+          className={
+            !canDeleteCycle
+              ? "opacity-50 pointer-events-none"
+              : "active:opacity-80"
+          }
+        >
           <TrashBrandIcon />
-        </Pressable> */}
+        </Pressable>
       </View>
 
       <Pressable

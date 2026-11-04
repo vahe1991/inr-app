@@ -13,6 +13,11 @@ const PUBLIC_PATHS = new Set([
   "api/logout",
 ]);
 
+const SESSION_DEVICE_PATHS = new Set([
+  "api/devices/register",
+  "api/devices/unregister",
+]);
+
 const PATH_ALIASES: Record<string, string> = {
   "api/notification": "api/notifications",
   "api/notification/read": "api/notifications/read",
@@ -104,6 +109,7 @@ export function isRequestAllowed(
   path: string,
 ) {
   if (isPublicApiPath(path)) return true;
+  if (SESSION_DEVICE_PATHS.has(canonicalizePath(path))) return true;
   if (!isKnownApiPath(path)) return true;
   return hasPermission(permissions, method.toUpperCase() as HttpMethod, path);
 }

@@ -1,3 +1,4 @@
+import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
@@ -16,13 +17,23 @@ export async function getDevicePushToken(): Promise<string | null> {
   try {
     const token = await Notifications.getDevicePushTokenAsync();
     return typeof token.data === "string" ? token.data : null;
-  } catch {
+  } catch (error) {
+    if (__DEV__) {
+      console.warn("getDevicePushTokenAsync failed", error);
+    }
     return null;
   }
 }
 
 export async function registerForPushNotifications(): Promise<string | null> {
   if (Platform.OS === "web") return null;
+
+  if (!Device.isDevice) {
+    if (__DEV__) {
+      console.warn("Push notifications require a physical device");
+    }
+    return null;
+  }
 
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
@@ -39,11 +50,18 @@ export async function registerForPushNotifications(): Promise<string | null> {
     const requested = await Notifications.requestPermissionsAsync();
     status = requested.status;
   }
-  if (status !== "granted") return null;
+  if (status !== "granted") {
+    if (__DEV__) {
+      console.warn("Notification permission not granted");
+    }
+    return null;
+  }
 
   const token = await getDevicePushToken();
   if (!token && __DEV__) {
-    console.warn("FCM token unavailable until a native rebuild");
+    console.warn(
+      "FCM/APNs token unavailable. Rebuild the native app after google-services.json / GoogleService-Info.plist changes.",
+    );
   }
   return token;
 }

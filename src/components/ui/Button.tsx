@@ -76,7 +76,9 @@ export function Button({
             color={
               variant === "primary" || variant === "destructive"
                 ? "#fff"
-                : "#5d4081"
+                : variant === "danger"
+                  ? "#FF4D4F"
+                  : "#5d4081"
             }
           />
         </View>
