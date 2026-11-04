@@ -37,8 +37,10 @@ export const ApiPaths = {
     `api/patients/${patientId}/inr-complication`,
   patientInrCycle: (patientId: string | number = "{patientId}") =>
     `api/patients/${patientId}/inr-cycle`,
-  patientDeleteInrCycle: (patientId: string | number = "{patientId}") =>
-    `api/patients/${patientId}/inr-cycle`,
+  patientDeleteInrCycle: (
+    doctorId: string | number = "{doctorId}",
+    cycleId: string | number = "{cycleId}",
+  ) => `api/patients/${doctorId}/inr-cycle/${cycleId}`,
   patientInrNorm: (patientId: string | number = "{patientId}") =>
     `api/patients/${patientId}/inr-norm`,
   patientWarfarinCalendar: (patientId: string | number = "{patientId}") =>

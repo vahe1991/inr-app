@@ -1,35 +1,41 @@
-import { ApiPaths } from "@/constants/apiPaths";
-import { hasPermission } from "@/helpers/permissions";
-import { storage } from "@/libs/storage";
 import { notificationApi } from "@/services/notification";
 import { registerForPushNotifications } from "@/services/push-notifications";
 import { useEffect } from "react";
 import { Platform } from "react-native";
+
+let lastRegisteredToken: string | null = null;
+let inFlight: Promise<void> | null = null;
+
+async function syncDeviceToken() {
+  if (inFlight) return inFlight;
+
+  inFlight = (async () => {
+    const token = await registerForPushNotifications();
+    if (!token || lastRegisteredToken === token) return;
+
+    await notificationApi.registerDevice({
+      token,
+      platform: Platform.OS === "ios" ? "ios" : "android",
+    });
+    lastRegisteredToken = token;
+  })()
+    .catch((error) => {
+      if (__DEV__) {
+        console.warn("registerDevice failed", error);
+      }
+    })
+    .finally(() => {
+      inFlight = null;
+    });
+
+  return inFlight;
+}
 
 export function usePushNotifications(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
     if (Platform.OS !== "android" && Platform.OS !== "ios") return;
 
-    void (async () => {
-      const permissions = await storage.getPermissions();
-      if (!hasPermission(permissions, "POST", ApiPaths.devicesRegister)) {
-        return;
-      }
-
-      const token = await registerForPushNotifications();
-      if (!token) return;
-
-      try {
-        await notificationApi.registerDevice({
-          token,
-          platform: Platform.OS,
-        });
-      } catch (error) {
-        if (__DEV__) {
-          console.warn("registerDevice failed", error);
-        }
-      }
-    })();
+    void syncDeviceToken();
   }, [enabled]);
 }

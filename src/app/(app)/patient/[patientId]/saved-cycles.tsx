@@ -36,6 +36,7 @@ export default function SavedCyclesScreen() {
   const { mutate: deleteInrCycle, isPending: isDeletingInrCycle } =
     useDeleteInrCycle(() => {
       setPendingDelete(null);
+      refetch();
     });
   const canApply = useCan(
     "POST",

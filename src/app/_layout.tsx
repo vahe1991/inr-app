@@ -1,7 +1,6 @@
 import "@/global.css";
 import "react-native-gesture-handler";
 
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { firstAllowedAppHref } from "@/helpers/permissions";
 import { queryClient } from "@/libs/queryClient";
@@ -17,10 +16,10 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { useEffect, type ReactNode } from "react";
-import { Image, Platform, StatusBar, View } from "react-native";
+import { Image, Platform, StatusBar, StyleSheet, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
-void SystemUI.setBackgroundColorAsync("#000000");
+void SystemUI.setBackgroundColorAsync("#ffffff");
 
 function applyStatusBar() {
   StatusBar.setBarStyle("dark-content", true);
@@ -32,11 +31,11 @@ function applyStatusBar() {
 
 function BrandSplash() {
   return (
-    <View className="flex-1 items-center justify-center bg-black">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <View style={styles.splashRoot}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <Image
-        source={require("../../assets/images/splash-logo.png")}
-        className="h-[280px] w-[230px]"
+        source={require("../../assets/images/brand-img.png")}
+        style={styles.splashImage}
         resizeMode="contain"
         accessibilityLabel="Նորք-Մարաշ բժշկական կենտրոն"
         onLoad={() => {
@@ -75,7 +74,7 @@ function AuthGate({ children }: { children: ReactNode }) {
   }, [isAuthenticated, permissions, user, segments, router]);
 
   if (isAuthenticated === null) {
-    return <LoadingScreen />;
+    return <BrandSplash />;
   }
 
   return <>{children}</>;
@@ -121,3 +120,17 @@ export default function RootLayout() {
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  splashRoot: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff",
+  },
+  splashImage: {
+    width: 230,
+    height: 176,
+    borderRadius: 0,
+  },
+});
